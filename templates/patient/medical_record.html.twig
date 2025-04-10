@@ -1,0 +1,364 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Dossier Médical - Espace Patient{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header with breadcrumb -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ path('app_patient_dashboard') }}">Tableau de bord</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Dossier médical</li>
+                </ol>
+            </nav>
+            <h1 class="h2 mb-0">Mon dossier médical</h1>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Personal Information -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header p-3 d-flex align-items-center">
+                    <i class="bi bi-person-badge-fill text-primary me-2"></i>
+                    <h5 class="mb-0">Informations personnelles</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-column align-items-center text-center mb-4">
+                        <div class="avatar-lg mb-3 rounded-circle bg-light d-flex align-items-center justify-content-center">
+                            <i class="bi bi-person-fill text-primary display-5"></i>
+                        </div>
+                        <h5 class="mb-1">{{ patient.prenom }} {{ patient.nom }}</h5>
+                        <p class="text-muted mb-0">ID: {{ patient.numeroPatient }}</p>
+                    </div>
+                    
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item px-0 d-flex justify-content-between">
+                            <span class="text-muted">Date de naissance</span>
+                            <span>{{ patient.dateNaissance|date('d/m/Y') }}</span>
+                        </li>
+                        <li class="list-group-item px-0 d-flex justify-content-between">
+                            <span class="text-muted">Âge</span>
+                            <span>{{ patient.age }} ans</span>
+                        </li>
+                        <li class="list-group-item px-0 d-flex justify-content-between">
+                            <span class="text-muted">Groupe sanguin</span>
+                            <span>{{ patient.groupeSanguin|default('Non renseigné') }}</span>
+                        </li>
+                        <li class="list-group-item px-0 d-flex justify-content-between">
+                            <span class="text-muted">Sexe</span>
+                            <span>{{ patient.sexe == 'M' ? 'Masculin' : 'Féminin' }}</span>
+                        </li>
+                        <li class="list-group-item px-0 d-flex justify-content-between">
+                            <span class="text-muted">Contact</span>
+                            <span>{{ patient.telephone }}</span>
+                        </li>
+                        <li class="list-group-item px-0 d-flex justify-content-between">
+                            <span class="text-muted">Email</span>
+                            <span>{{ patient.email }}</span>
+                        </li>
+                        <li class="list-group-item px-0 d-flex justify-content-between">
+                            <span class="text-muted">Adresse</span>
+                            <span class="text-end">{{ patient.adresse }}</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-footer bg-white p-3">
+                    <a href="{{ path('app_patient_profile') }}" class="btn btn-outline-primary btn-sm w-100">
+                        <i class="bi bi-pencil-square me-2"></i>Modifier mes informations
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Medical Information Tabs -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header p-3 d-flex align-items-center">
+                    <i class="bi bi-clipboard2-pulse-fill text-primary me-2"></i>
+                    <h5 class="mb-0">Suivi médical</h5>
+                </div>
+                <div class="card-body p-0">
+                    <!-- Tabs -->
+                    <ul class="nav nav-tabs px-3 pt-3" id="myTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="antecedents-tab" data-bs-toggle="tab" data-bs-target="#antecedents" type="button" role="tab" aria-controls="antecedents" aria-selected="true">Antécédents médicaux</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="allergies-tab" data-bs-toggle="tab" data-bs-target="#allergies" type="button" role="tab" aria-controls="allergies" aria-selected="false">Allergies</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="medications-tab" data-bs-toggle="tab" data-bs-target="#medications" type="button" role="tab" aria-controls="medications" aria-selected="false">Traitements en cours</button>
+                        </li>
+                    </ul>
+                    
+                    <!-- Tab Content -->
+                    <div class="tab-content p-3" id="myTabContent">
+                        <!-- Antecedents Tab -->
+                        <div class="tab-pane fade show active" id="antecedents" role="tabpanel" aria-labelledby="antecedents-tab">
+                            {% if antecedents is empty %}
+                                <div class="text-center py-5">
+                                    <div class="empty-state mb-3">
+                                        <i class="bi bi-clipboard-x text-muted opacity-50 display-1"></i>
+                                    </div>
+                                    <h5 class="text-muted">Aucun antécédent médical</h5>
+                                    <p class="text-muted">Vos antécédents médicaux apparaîtront ici après avoir été ajoutés par votre médecin.</p>
+                                </div>
+                            {% else %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Type</th>
+                                                <th>Description</th>
+                                                <th>Date</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for antecedent in antecedents %}
+                                                <tr>
+                                                    <td>
+                                                        <span class="badge bg-{{ antecedent.type == 'Médical' ? 'info' : (antecedent.type == 'Chirurgical' ? 'warning' : 'secondary') }}">
+                                                            {{ antecedent.type }}
+                                                        </span>
+                                                    </td>
+                                                    <td>{{ antecedent.description }}</td>
+                                                    <td>{{ antecedent.date|date('d/m/Y') }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Allergies Tab -->
+                        <div class="tab-pane fade" id="allergies" role="tabpanel" aria-labelledby="allergies-tab">
+                            {% if allergies is empty %}
+                                <div class="text-center py-5">
+                                    <div class="empty-state mb-3">
+                                        <i class="bi bi-exclamation-triangle text-muted opacity-50 display-1"></i>
+                                    </div>
+                                    <h5 class="text-muted">Aucune allergie connue</h5>
+                                    <p class="text-muted">Vos allergies connues apparaîtront ici après avoir été ajoutées par votre médecin.</p>
+                                </div>
+                            {% else %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Allergie</th>
+                                                <th>Réaction</th>
+                                                <th>Sévérité</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for allergie in allergies %}
+                                                <tr>
+                                                    <td>{{ allergie.nom }}</td>
+                                                    <td>{{ allergie.reaction }}</td>
+                                                    <td>
+                                                        <span class="badge bg-{{ allergie.severite == 'Élevée' ? 'danger' : (allergie.severite == 'Moyenne' ? 'warning' : 'info') }}">
+                                                            {{ allergie.severite }}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Medications Tab -->
+                        <div class="tab-pane fade" id="medications" role="tabpanel" aria-labelledby="medications-tab">
+                            {% if medications is empty %}
+                                <div class="text-center py-5">
+                                    <div class="empty-state mb-3">
+                                        <i class="bi bi-capsule text-muted opacity-50 display-1"></i>
+                                    </div>
+                                    <h5 class="text-muted">Aucun traitement en cours</h5>
+                                    <p class="text-muted">Vos traitements en cours apparaîtront ici après avoir été ajoutés par votre médecin.</p>
+                                </div>
+                            {% else %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Médicament</th>
+                                                <th>Posologie</th>
+                                                <th>Début</th>
+                                                <th>Fin</th>
+                                                <th>Statut</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for medication in medications %}
+                                                <tr>
+                                                    <td>{{ medication.nom }}</td>
+                                                    <td>{{ medication.posologie }}</td>
+                                                    <td>{{ medication.dateDebut|date('d/m/Y') }}</td>
+                                                    <td>{{ medication.dateFin ? medication.dateFin|date('d/m/Y') : 'Non définie' }}</td>
+                                                    <td>
+                                                        {% set now = "now"|date('Y-m-d') %}
+                                                        {% if medication.dateFin and medication.dateFin|date('Y-m-d') < now %}
+                                                            <span class="badge bg-secondary">Terminé</span>
+                                                        {% else %}
+                                                            <span class="badge bg-success">En cours</span>
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Medical History -->
+            <div class="card shadow-sm border-0 mt-4">
+                <div class="card-header p-3 d-flex align-items-center">
+                    <i class="bi bi-clock-history text-primary me-2"></i>
+                    <h5 class="mb-0">Historique médical récent</h5>
+                </div>
+                <div class="card-body">
+                    {% if consultations is empty and examens is empty %}
+                        <div class="text-center py-4">
+                            <div class="empty-state mb-3">
+                                <i class="bi bi-calendar-x text-muted opacity-50 display-1"></i>
+                            </div>
+                            <h5 class="text-muted">Aucun historique médical</h5>
+                            <p class="text-muted">Votre historique médical apparaîtra ici après vos consultations ou examens.</p>
+                        </div>
+                    {% else %}
+                        <div class="timeline">
+                            {% set events = [] %}
+                            {% for consultation in consultations %}
+                                {% set events = events|merge([{
+                                    'date': consultation.date,
+                                    'type': 'consultation',
+                                    'title': 'Consultation avec Dr. ' ~ consultation.medecin.nom,
+                                    'description': consultation.motif,
+                                    'status': consultation.status
+                                }]) %}
+                            {% endfor %}
+                            
+                            {% for examen in examens %}
+                                {% set events = events|merge([{
+                                    'date': examen.date,
+                                    'type': 'examen',
+                                    'title': examen.type,
+                                    'description': examen.description,
+                                    'status': examen.status
+                                }]) %}
+                            {% endfor %}
+                            
+                            {% set events = events|sort((a, b) => b.date <=> a.date) %}
+                            
+                            {% for event in events|slice(0, 5) %}
+                                <div class="timeline-item">
+                                    <div class="timeline-marker {% if event.type == 'consultation' %}bg-primary{% else %}bg-info{% endif %}">
+                                        <i class="bi {% if event.type == 'consultation' %}bi-person-lines-fill{% else %}bi-clipboard2-pulse{% endif %} text-white"></i>
+                                    </div>
+                                    <div class="timeline-content">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <h6 class="mb-1">{{ event.title }}</h6>
+                                            <small class="text-muted">{{ event.date|date('d/m/Y') }}</small>
+                                        </div>
+                                        <p class="mb-1">{{ event.description }}</p>
+                                        <span class="badge bg-{{ 
+                                            event.status == 'terminé' ? 'success' : 
+                                            (event.status == 'programmé' ? 'warning' : 
+                                            (event.status == 'en attente' ? 'info' : 'secondary')) 
+                                        }}">
+                                            {{ event.status|capitalize }}
+                                        </span>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                            
+                            {% if events|length > 5 %}
+                                <div class="text-center mt-3">
+                                    <a href="{{ path('app_patient_history') }}" class="btn btn-outline-primary btn-sm">
+                                        Voir tout l'historique
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar-lg {
+    width: 80px;
+    height: 80px;
+}
+
+.empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100px;
+}
+
+.timeline {
+    position: relative;
+    padding-left: 30px;
+    margin-bottom: 20px;
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: 20px;
+}
+
+.timeline-item:last-child {
+    padding-bottom: 0;
+}
+
+.timeline:before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 15px;
+    width: 2px;
+    background-color: #e9ecef;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -30px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 30px;
+    z-index: 1;
+}
+
+.timeline-marker i {
+    font-size: 14px;
+}
+
+.timeline-content {
+    padding: 15px;
+    border-radius: 5px;
+    background-color: #f8f9fa;
+    transition: all 0.3s ease;
+}
+
+.timeline-content:hover {
+    background-color: #f0f0f0;
+}
+</style>
+{% endblock %} 

@@ -1,0 +1,473 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mon profil - Clinique 221{% endblock %}
+
+{% block content %}
+    <div class="container py-4">
+        <h1 class="mb-4">Mon profil</h1>
+        
+        <div class="mb-4">
+            <a href="{{ path('app_patient_dashboard') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Retour au tableau de bord
+            </a>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">Informations personnelles</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center mb-4">
+                            <div class="avatar-circle mx-auto mb-3">
+                                <span class="avatar-initials">{{ app.user.prenom|first }}{{ app.user.nom|first }}</span>
+                            </div>
+                            <h5>{{ app.user.prenom }} {{ app.user.nom }}</h5>
+                            <p class="text-muted">Patient ID: {{ app.user.code }}</p>
+                        </div>
+                        
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Email:</span>
+                                <span>{{ app.user.email }}</span>
+                            </li>
+                            {% if app.user.telephone %}
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Téléphone:</span>
+                                    <span>{{ app.user.telephone }}</span>
+                                </li>
+                            {% else %}
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Téléphone:</span>
+                                    <span class="text-muted">Non renseigné</span>
+                                </li>
+                            {% endif %}
+                            {% if app.user.adresse %}
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Adresse:</span>
+                                    <span>{{ app.user.adresse }}</span>
+                                </li>
+                            {% else %}
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Adresse:</span>
+                                    <span class="text-muted">Non renseignée</span>
+                                </li>
+                            {% endif %}
+                            {% if app.user.dateNaissance %}
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Date de naissance:</span>
+                                    <span>{{ app.user.dateNaissance|date('d/m/Y') }}</span>
+                                </li>
+                            {% endif %}
+                            {% if app.user.sexe %}
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Sexe:</span>
+                                    <span>{{ app.user.sexe == 'M' ? 'Masculin' : 'Féminin' }}</span>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    <div class="card-footer">
+                        <button type="button" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                            <i class="bi bi-pencil-square"></i> Modifier
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="card-title mb-0">Antécédents médicaux</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if app.user.antecedentsMedicaux is empty %}
+                            <p class="text-muted mb-0">Aucun antécédent médical enregistré.</p>
+                        {% else %}
+                            <ul class="list-group">
+                                {% for antecedent in app.user.antecedentsMedicaux %}
+                                    <li class="list-group-item">{{ antecedent }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer">
+                        <button type="button" class="btn btn-warning w-100" data-bs-toggle="modal" data-bs-target="#editMedicalHistoryModal">
+                            <i class="bi bi-pencil-square"></i> Modifier
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="card shadow-sm">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="card-title mb-0">Sécurité</h5>
+                    </div>
+                    <div class="card-body">
+                        <button type="button" class="btn btn-outline-danger w-100 mb-2" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                            <i class="bi bi-lock"></i> Changer de mot de passe
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary w-100" data-bs-toggle="modal" data-bs-target="#privacySettingsModal">
+                            <i class="bi bi-shield-lock"></i> Paramètres de confidentialité
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-8">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="card-title mb-0">Mes préférences</h5>
+                    </div>
+                    <div class="card-body">
+                        {{ form_start(preferences_form) }}
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch">
+                                        {{ form_widget(preferences_form.notification_email) }}
+                                        {{ form_label(preferences_form.notification_email) }}
+                                    </div>
+                                    <div class="form-text text-muted">
+                                        Recevoir des notifications par email pour vos rendez-vous
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch">
+                                        {{ form_widget(preferences_form.notification_sms) }}
+                                        {{ form_label(preferences_form.notification_sms) }}
+                                    </div>
+                                    <div class="form-text text-muted">
+                                        Recevoir des notifications par SMS pour vos rendez-vous
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch">
+                                        {{ form_widget(preferences_form.newsletter) }}
+                                        {{ form_label(preferences_form.newsletter) }}
+                                    </div>
+                                    <div class="form-text text-muted">
+                                        Recevoir notre newsletter mensuelle
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch">
+                                        {{ form_widget(preferences_form.share_data) }}
+                                        {{ form_label(preferences_form.share_data) }}
+                                    </div>
+                                    <div class="form-text text-muted">
+                                        Partager vos données médicales anonymisées à des fins de recherche
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                {{ form_label(preferences_form.language) }}
+                                {{ form_widget(preferences_form.language, {'attr': {'class': 'form-select'}}) }}
+                            </div>
+                            
+                            <div class="mb-3">
+                                {{ form_label(preferences_form.reminder_time) }}
+                                {{ form_widget(preferences_form.reminder_time, {'attr': {'class': 'form-select'}}) }}
+                                <div class="form-text text-muted">
+                                    À quel moment souhaitez-vous être rappelé de vos rendez-vous
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-info">
+                                    <i class="bi bi-save"></i> Enregistrer les préférences
+                                </button>
+                            </div>
+                        {{ form_end(preferences_form) }}
+                    </div>
+                </div>
+                
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">Historique de connexion</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Adresse IP</th>
+                                        <th>Appareil</th>
+                                        <th>Statut</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for login in login_history %}
+                                        <tr>
+                                            <td>{{ login.date|date('d/m/Y H:i') }}</td>
+                                            <td>{{ login.ip }}</td>
+                                            <td>{{ login.device }}</td>
+                                            <td>
+                                                {% if login.status == 'success' %}
+                                                    <span class="badge bg-success">Réussie</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">Échouée</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="4" class="text-center">Aucun historique disponible</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">Mes documents partagés</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if shared_documents is empty %}
+                            <div class="alert alert-info mb-0">
+                                <i class="bi bi-info-circle"></i> Vous n'avez pas encore partagé de documents.
+                            </div>
+                        {% else %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Document</th>
+                                            <th>Partagé avec</th>
+                                            <th>Date</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for doc in shared_documents %}
+                                            <tr>
+                                                <td>{{ doc.name }}</td>
+                                                <td>{{ doc.sharedWith }}</td>
+                                                <td>{{ doc.date|date('d/m/Y') }}</td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-outline-danger">
+                                                        <i class="bi bi-trash"></i> Révoquer
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal Édition Profil -->
+    <div class="modal fade" id="editProfileModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Modifier mon profil</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    {{ form_start(profile_form) }}
+                        <div class="mb-3">
+                            {{ form_label(profile_form.nom) }}
+                            {{ form_widget(profile_form.nom, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(profile_form.nom) }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form_label(profile_form.prenom) }}
+                            {{ form_widget(profile_form.prenom, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(profile_form.prenom) }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form_label(profile_form.email) }}
+                            {{ form_widget(profile_form.email, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(profile_form.email) }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form_label(profile_form.telephone) }}
+                            {{ form_widget(profile_form.telephone, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(profile_form.telephone) }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form_label(profile_form.adresse) }}
+                            {{ form_widget(profile_form.adresse, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(profile_form.adresse) }}
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {{ form_label(profile_form.dateNaissance) }}
+                                {{ form_widget(profile_form.dateNaissance, {'attr': {'class': 'form-control'}}) }}
+                                {{ form_errors(profile_form.dateNaissance) }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form_label(profile_form.sexe) }}
+                                {{ form_widget(profile_form.sexe, {'attr': {'class': 'form-select'}}) }}
+                                {{ form_errors(profile_form.sexe) }}
+                            </div>
+                        </div>
+                    {{ form_end(profile_form) }}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" form="{{ profile_form.vars.id }}" class="btn btn-primary">Enregistrer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal Antécédents Médicaux -->
+    <div class="modal fade" id="editMedicalHistoryModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Modifier mes antécédents médicaux</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    {{ form_start(medical_history_form) }}
+                        <div class="mb-3">
+                            {{ form_label(medical_history_form.antecedentsMedicaux) }}
+                            {{ form_widget(medical_history_form.antecedentsMedicaux, {'attr': {'class': 'form-control'}}) }}
+                            <div class="form-text">
+                                Veuillez saisir vos antécédents médicaux, un par ligne.
+                            </div>
+                            {{ form_errors(medical_history_form.antecedentsMedicaux) }}
+                        </div>
+                    {{ form_end(medical_history_form) }}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" form="{{ medical_history_form.vars.id }}" class="btn btn-warning">Enregistrer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal Changement de Mot de Passe -->
+    <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Changer mon mot de passe</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    {{ form_start(password_form) }}
+                        <div class="mb-3">
+                            {{ form_label(password_form.currentPassword) }}
+                            {{ form_widget(password_form.currentPassword, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(password_form.currentPassword) }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form_label(password_form.newPassword.first) }}
+                            {{ form_widget(password_form.newPassword.first, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(password_form.newPassword.first) }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form_label(password_form.newPassword.second) }}
+                            {{ form_widget(password_form.newPassword.second, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(password_form.newPassword.second) }}
+                        </div>
+                    {{ form_end(password_form) }}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" form="{{ password_form.vars.id }}" class="btn btn-danger">Changer le mot de passe</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal Paramètres de Confidentialité -->
+    <div class="modal fade" id="privacySettingsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Paramètres de confidentialité</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> Ces paramètres vous permettent de contrôler qui peut accéder à vos informations médicales.
+                    </div>
+                    
+                    {{ form_start(privacy_form) }}
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                {{ form_widget(privacy_form.allowMedicalsDataSharing) }}
+                                {{ form_label(privacy_form.allowMedicalsDataSharing) }}
+                            </div>
+                            <div class="form-text">
+                                Autoriser les médecins de la clinique à accéder à votre dossier médical complet
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                {{ form_widget(privacy_form.allowExternalSharing) }}
+                                {{ form_label(privacy_form.allowExternalSharing) }}
+                            </div>
+                            <div class="form-text">
+                                Autoriser le partage de vos données médicales avec des médecins externes (sur demande uniquement)
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                {{ form_widget(privacy_form.allowAutomaticBackup) }}
+                                {{ form_label(privacy_form.allowAutomaticBackup) }}
+                            </div>
+                            <div class="form-text">
+                                Autoriser la sauvegarde automatique de vos documents médicaux sur votre espace personnel
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                {{ form_widget(privacy_form.allowAnonymousDataResearch) }}
+                                {{ form_label(privacy_form.allowAnonymousDataResearch) }}
+                            </div>
+                            <div class="form-text">
+                                Autoriser l'utilisation anonyme de vos données à des fins de recherche médicale
+                            </div>
+                        </div>
+                    {{ form_end(privacy_form) }}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" form="{{ privacy_form.vars.id }}" class="btn btn-primary">Enregistrer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .avatar-circle {
+            width: 100px;
+            height: 100px;
+            background-color: #3498db;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .avatar-initials {
+            color: white;
+            font-size: 36px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+    </style>
+{% endblock %} 

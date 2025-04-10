@@ -1,0 +1,413 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Messagerie - Espace Patient{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header with breadcrumbs and actions -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1">Messagerie</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{{ path('app_patient_dashboard') }}">Tableau de bord</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Messagerie</li>
+                </ol>
+            </nav>
+        </div>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newMessageModal">
+            <i class="bi bi-plus-circle me-2"></i>Nouveau message
+        </button>
+    </div>
+
+    <!-- Messages container -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="row g-0">
+                <!-- Messages list (sidebar) -->
+                <div class="col-md-4 border-end">
+                    <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent border-end-0">
+                                <i class="bi bi-search"></i>
+                            </span>
+                            <input type="text" class="form-control border-start-0" id="searchMessages" placeholder="Rechercher...">
+                        </div>
+                    </div>
+                    
+                    <!-- Messages navigation tabs -->
+                    <ul class="nav nav-pills nav-fill px-3 pt-3" id="messagesTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="inbox-tab" data-bs-toggle="tab" data-bs-target="#inbox-tab-pane" 
+                                    type="button" role="tab" aria-selected="true">
+                                Boîte de réception
+                                {% if unread_count > 0 %}
+                                <span class="badge rounded-pill bg-danger ms-2">{{ unread_count }}</span>
+                                {% endif %}
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="sent-tab" data-bs-toggle="tab" data-bs-target="#sent-tab-pane" 
+                                    type="button" role="tab" aria-selected="false">
+                                Envoyés
+                            </button>
+                        </li>
+                    </ul>
+                    
+                    <!-- Messages tabs content -->
+                    <div class="tab-content p-0" id="messagesTabContent">
+                        <!-- Inbox tab -->
+                        <div class="tab-pane fade show active" id="inbox-tab-pane" role="tabpanel" tabindex="0">
+                            <div class="list-group list-group-flush message-list">
+                                {% if received_messages is empty %}
+                                    <div class="text-center p-4">
+                                        <div class="empty-state mb-3">
+                                            <i class="bi bi-inbox text-muted opacity-50 fs-1"></i>
+                                        </div>
+                                        <p class="text-muted">Votre boîte de réception est vide</p>
+                                    </div>
+                                {% else %}
+                                    {% for message in received_messages %}
+                                        <a href="#" class="list-group-item list-group-item-action py-3 message-item {% if message.isUnread %}unread{% endif %}" 
+                                           data-message-id="{{ message.id }}">
+                                            <div class="d-flex">
+                                                <div class="flex-shrink-0">
+                                                    <div class="avatar bg-light text-primary">
+                                                        {% if message.sender.type == 'doctor' %}
+                                                            <i class="bi bi-person-badge"></i>
+                                                        {% else %}
+                                                            <i class="bi bi-hospital"></i>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                                <div class="flex-grow-1 ms-3">
+                                                    <div class="d-flex w-100 justify-content-between">
+                                                        <h6 class="mb-1">
+                                                            {% if message.sender.type == 'doctor' %}
+                                                                Dr. {{ message.sender.name }}
+                                                            {% else %}
+                                                                {{ message.sender.name }}
+                                                            {% endif %}
+                                                            
+                                                            {% if message.isUnread %}
+                                                                <span class="badge rounded-pill bg-primary ms-2">Nouveau</span>
+                                                            {% endif %}
+                                                        </h6>
+                                                        <small class="text-muted">{{ message.date|date('d/m/Y') }}</small>
+                                                    </div>
+                                                    <p class="mb-1 message-subject fw-medium">{{ message.subject }}</p>
+                                                    <small class="text-muted message-preview">{{ message.content|slice(0, 50) }}{% if message.content|length > 50 %}...{% endif %}</small>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Sent tab -->
+                        <div class="tab-pane fade" id="sent-tab-pane" role="tabpanel" tabindex="0">
+                            <div class="list-group list-group-flush message-list">
+                                {% if sent_messages is empty %}
+                                    <div class="text-center p-4">
+                                        <div class="empty-state mb-3">
+                                            <i class="bi bi-send text-muted opacity-50 fs-1"></i>
+                                        </div>
+                                        <p class="text-muted">Aucun message envoyé</p>
+                                    </div>
+                                {% else %}
+                                    {% for message in sent_messages %}
+                                        <a href="#" class="list-group-item list-group-item-action py-3 message-item" 
+                                           data-message-id="{{ message.id }}">
+                                            <div class="d-flex">
+                                                <div class="flex-shrink-0">
+                                                    <div class="avatar bg-light text-primary">
+                                                        <i class="bi bi-person"></i>
+                                                    </div>
+                                                </div>
+                                                <div class="flex-grow-1 ms-3">
+                                                    <div class="d-flex w-100 justify-content-between">
+                                                        <h6 class="mb-1">
+                                                            À: 
+                                                            {% if message.recipient.type == 'doctor' %}
+                                                                Dr. {{ message.recipient.name }}
+                                                            {% else %}
+                                                                {{ message.recipient.name }}
+                                                            {% endif %}
+                                                        </h6>
+                                                        <small class="text-muted">{{ message.date|date('d/m/Y') }}</small>
+                                                    </div>
+                                                    <p class="mb-1 message-subject fw-medium">{{ message.subject }}</p>
+                                                    <small class="text-muted message-preview">{{ message.content|slice(0, 50) }}{% if message.content|length > 50 %}...{% endif %}</small>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Message content -->
+                <div class="col-md-8" id="messageContent">
+                    <div class="d-flex justify-content-center align-items-center h-100 text-center p-4">
+                        <div>
+                            <div class="empty-state large-icon mb-3">
+                                <i class="bi bi-envelope-open text-muted opacity-50 fs-1"></i>
+                            </div>
+                            <h5 class="mb-2">Sélectionnez un message</h5>
+                            <p class="text-muted">Cliquez sur un message dans la liste pour afficher son contenu</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Template for message content when selected -->
+                <template id="message-template">
+                    <div class="p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="message-title mb-0"></h5>
+                            <div>
+                                <button class="btn btn-outline-primary btn-sm message-reply" data-bs-toggle="modal" data-bs-target="#replyMessageModal">
+                                    <i class="bi bi-reply me-1"></i>Répondre
+                                </button>
+                                <button class="btn btn-outline-danger btn-sm ms-2">
+                                    <i class="bi bi-trash me-1"></i>Supprimer
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="message-meta d-flex align-items-center mb-4">
+                            <div class="avatar bg-light text-primary me-3">
+                                <i class="message-avatar"></i>
+                            </div>
+                            <div>
+                                <div class="fw-medium message-from"></div>
+                                <div class="text-muted small message-date"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="message-body mb-4">
+                            <p class="message-content"></p>
+                        </div>
+                        
+                        <div class="message-attachments">
+                            <!-- Will be populated if there are attachments -->
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New Message Modal -->
+<div class="modal fade" id="newMessageModal" tabindex="-1" aria-labelledby="newMessageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="newMessageModalLabel">Nouveau message</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="newMessageForm" action="{{ path('app_patient_message_send') }}" method="post">
+                    <div class="mb-3">
+                        <label for="messageRecipient" class="form-label">Destinataire</label>
+                        <select class="form-select" id="messageRecipient" name="recipient" required>
+                            <option value="">Sélectionner un destinataire</option>
+                            <optgroup label="Médecins">
+                                {% for doctor in doctors %}
+                                    <option value="doctor_{{ doctor.id }}">Dr. {{ doctor.prenom }} {{ doctor.nom }}</option>
+                                {% endfor %}
+                            </optgroup>
+                            <optgroup label="Services">
+                                <option value="service_accueil">Accueil</option>
+                                <option value="service_admin">Administration</option>
+                                <option value="service_labo">Laboratoire</option>
+                                <option value="service_radiologie">Radiologie</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="messageSubject" class="form-label">Sujet</label>
+                        <input type="text" class="form-control" id="messageSubject" name="subject" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="messageContent" class="form-label">Message</label>
+                        <textarea class="form-control" id="messageContent" name="content" rows="5" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="messageAttachment" class="form-label">Pièce jointe (optionnel)</label>
+                        <input class="form-control" type="file" id="messageAttachment" name="attachment">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="submit" form="newMessageForm" class="btn btn-primary">Envoyer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reply Message Modal -->
+<div class="modal fade" id="replyMessageModal" tabindex="-1" aria-labelledby="replyMessageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="replyMessageModalLabel">Répondre au message</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="replyMessageForm" action="{{ path('app_patient_message_reply') }}" method="post">
+                    <input type="hidden" id="replyMessageId" name="messageId">
+                    <div class="mb-3">
+                        <label for="replySubject" class="form-label">Sujet</label>
+                        <input type="text" class="form-control" id="replySubject" name="subject" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="replyContent" class="form-label">Message</label>
+                        <textarea class="form-control" id="replyContent" name="content" rows="5" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="replyAttachment" class="form-label">Pièce jointe (optionnel)</label>
+                        <input class="form-control" type="file" id="replyAttachment" name="attachment">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="submit" form="replyMessageForm" class="btn btn-primary">Envoyer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: rgba(0,0,0,0.05);
+    margin: 0 auto;
+}
+
+.large-icon {
+    width: 100px;
+    height: 100px;
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.message-item {
+    border-left: 3px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.message-item:hover {
+    background-color: rgba(var(--primary-rgb), 0.05);
+    border-left-color: var(--primary-color);
+}
+
+.message-item.unread {
+    background-color: rgba(var(--primary-rgb), 0.05);
+    border-left-color: var(--primary-color);
+}
+
+.message-item.active {
+    background-color: rgba(var(--primary-rgb), 0.1);
+    border-left-color: var(--primary-color);
+}
+</style>
+
+<script>
+// Script to filter messages based on search input
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchMessages');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const messageItems = document.querySelectorAll('.message-item');
+            
+            messageItems.forEach(item => {
+                const subject = item.querySelector('.message-subject').textContent.toLowerCase();
+                const preview = item.querySelector('.message-preview').textContent.toLowerCase();
+                const from = item.querySelector('h6').textContent.toLowerCase();
+                
+                if (subject.includes(searchTerm) || preview.includes(searchTerm) || from.includes(searchTerm)) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+    }
+    
+    // Display message content when a message is clicked
+    const messageItems = document.querySelectorAll('.message-item');
+    const messageContentContainer = document.getElementById('messageContent');
+    const messageTemplate = document.getElementById('message-template');
+    
+    messageItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Remove active class from all messages
+            messageItems.forEach(msg => msg.classList.remove('active'));
+            
+            // Add active class to clicked message
+            this.classList.add('active');
+            
+            // Mark as read (remove unread class)
+            this.classList.remove('unread');
+            
+            // Get message data (in a real app, this would be fetched from the server)
+            const messageId = this.getAttribute('data-message-id');
+            
+            // Sample data - in real app, fetch from server based on messageId
+            const messageData = {
+                id: messageId,
+                title: this.querySelector('.message-subject').textContent,
+                from: this.querySelector('h6').textContent,
+                date: this.querySelector('.text-muted').textContent,
+                content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam vehicula ipsum a arcu cursus vitae congue mauris rhoncus. Aenean et elit scelerisque, ultrices nulla at, aliquam elit. Nullam vehicula ipsum a arcu cursus vitae congue mauris rhoncus.",
+                avatar: this.querySelector('.avatar i').className
+            };
+            
+            // Clone the template
+            const content = messageTemplate.content.cloneNode(true);
+            
+            // Fill in the message details
+            content.querySelector('.message-title').textContent = messageData.title;
+            content.querySelector('.message-from').textContent = messageData.from;
+            content.querySelector('.message-date').textContent = messageData.date;
+            content.querySelector('.message-content').textContent = messageData.content;
+            content.querySelector('.message-avatar').className = messageData.avatar;
+            
+            // Set reply button data
+            content.querySelector('.message-reply').setAttribute('data-message-id', messageData.id);
+            
+            // Clear and append
+            messageContentContainer.innerHTML = '';
+            messageContentContainer.appendChild(content);
+            
+            // Setup reply functionality
+            document.querySelector('.message-reply').addEventListener('click', function() {
+                document.getElementById('replyMessageId').value = this.getAttribute('data-message-id');
+                document.getElementById('replySubject').value = 'Re: ' + messageData.title;
+            });
+        });
+    });
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,225 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Détails de la prestation - Clinique 221{% endblock %}
+
+{% block body %}
+    <div class="container py-4">
+        <h1 class="mb-4">Détails de la prestation</h1>
+
+        <div class="mb-4">
+            <a href="{{ path('app_patient_prestation_list') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Retour à la liste
+            </a>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Prestation #{{ prestation.id }}</h5>
+                        <span class="fs-6">
+                            {% if prestation.statut == 'en attente' %}
+                                <span class="badge bg-warning text-dark">En attente</span>
+                            {% elseif prestation.statut == 'programmé' %}
+                                <span class="badge bg-info">Programmé</span>
+                            {% elseif prestation.statut == 'en cours' %}
+                                <span class="badge bg-primary">En cours</span>
+                            {% elseif prestation.statut == 'terminé' %}
+                                <span class="badge bg-success">Terminé</span>
+                            {% elseif prestation.statut == 'annulé' %}
+                                <span class="badge bg-danger">Annulé</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span class="fw-bold">Type de prestation:</span>
+                                <span>{{ prestation.type }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span class="fw-bold">Service:</span>
+                                <span>{{ prestation.service }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span class="fw-bold">Date:</span>
+                                <span>{{ prestation.date|date('d/m/Y à H:i') }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span class="fw-bold">Prix:</span>
+                                <span>{{ prestation.prix|number_format(0, ',', ' ') }} FCFA</span>
+                            </li>
+                            {% if prestation.laboratoire %}
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span class="fw-bold">Laboratoire:</span>
+                                <span>{{ prestation.laboratoire }}</span>
+                            </li>
+                            {% endif %}
+                            {% if prestation.technicien %}
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span class="fw-bold">Technicien:</span>
+                                <span>{{ prestation.technicien }}</span>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+                
+                {% if prestation.description %}
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Description</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">{{ prestation.description|nl2br }}</p>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if prestation.instructions %}
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Instructions</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">{{ prestation.instructions|nl2br }}</p>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if prestation.resultat %}
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Résultat</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-3">
+                            <span>Résultat disponible depuis le {{ prestation.resultat.dateResultat|date('d/m/Y') }}</span>
+                            <div>
+                                <a href="{{ path('app_patient_resultat_show', {'id': prestation.resultat.id}) }}" class="btn btn-outline-primary">
+                                    <i class="bi bi-eye"></i> Consulter
+                                </a>
+                                <a href="{{ path('app_patient_resultat_download', {'id': prestation.resultat.id}) }}" class="btn btn-outline-success">
+                                    <i class="bi bi-download"></i> Télécharger
+                                </a>
+                            </div>
+                        </div>
+                        
+                        {% if prestation.resultat.commentaire %}
+                            <div class="alert alert-info">
+                                <h6 class="alert-heading">Commentaire du technicien :</h6>
+                                <p class="mb-0">{{ prestation.resultat.commentaire|nl2br }}</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            {% if prestation.statut == 'en attente' or prestation.statut == 'programmé' %}
+                                <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#cancelModal">
+                                    <i class="bi bi-x-circle"></i> Annuler la prestation
+                                </button>
+                            {% endif %}
+                            
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#contactServiceModal">
+                                <i class="bi bi-envelope"></i> Contacter le service
+                            </button>
+                            
+                            {% if prestation.resultat %}
+                                <a href="{{ path('app_patient_resultat_download', {'id': prestation.resultat.id}) }}" class="btn btn-success">
+                                    <i class="bi bi-download"></i> Télécharger le résultat
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                {% if prestation.consultation %}
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Consultation liée</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Cette prestation a été prescrite lors de votre consultation du {{ prestation.consultation.date|date('d/m/Y') }} avec Dr. {{ prestation.consultation.medecin.nom }}</p>
+                        <div class="d-grid">
+                            <a href="{{ path('app_patient_consultation_show', {'id': prestation.consultation.id}) }}" class="btn btn-outline-primary">
+                                <i class="bi bi-clipboard2-pulse"></i> Voir la consultation
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Informations</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="small text-muted">Pour toute question concernant cette prestation, veuillez contacter le service concerné au numéro indiqué.</p>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-telephone"></i> Service Laboratoire: +221 33 123 45 67</li>
+                            <li><i class="bi bi-telephone"></i> Service Radiologie: +221 33 123 45 68</li>
+                            <li><i class="bi bi-telephone"></i> Accueil: +221 33 123 45 69</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal Annulation -->
+    <div class="modal fade" id="cancelModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmer l'annulation</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Êtes-vous sûr de vouloir annuler cette prestation ({{ prestation.type }}) du {{ prestation.date|date('d/m/Y') }} ?</p>
+                    <p class="text-danger">Cette action est irréversible.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                    <a href="{{ path('app_patient_prestation_cancel', {'id': prestation.id}) }}" class="btn btn-danger">Confirmer l'annulation</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal pour contacter le service -->
+    <div class="modal fade" id="contactServiceModal" tabindex="-1" aria-labelledby="contactServiceModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="contactServiceModalLabel">Contacter le service</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+                <form action="{{ path('app_patient_prestation_contact', {'id': prestation.id}) }}" method="post">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="subject" class="form-label">Sujet</label>
+                            <input type="text" class="form-control" id="subject" name="subject" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="message" class="form-label">Message</label>
+                            <textarea class="form-control" id="message" name="message" rows="5" required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn btn-primary">Envoyer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %} 

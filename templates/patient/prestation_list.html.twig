@@ -1,0 +1,95 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes prestations - Clinique 221{% endblock %}
+
+{% block content %}
+    <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Mes prestations</h1>
+            <a href="{{ path('app_patient_dashboard') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Retour au tableau de bord
+            </a>
+        </div>
+        
+        {% for message in app.flashes('success') %}
+            <div class="alert alert-success">
+                {{ message }}
+            </div>
+        {% endfor %}
+        
+        {% for message in app.flashes('error') %}
+            <div class="alert alert-danger">
+                {{ message }}
+            </div>
+        {% endfor %}
+        
+        <div class="mb-4">
+            <ul class="nav nav-tabs">
+                <li class="nav-item">
+                    <a class="nav-link active" href="{{ path('app_patient_prestation_list') }}">Toutes ({{ prestations|length }})</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ path('app_patient_prestation_list', {'filter': 'upcoming'}) }}">À venir</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ path('app_patient_prestation_list', {'filter': 'past'}) }}">Passées</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ path('app_patient_prestation_list', {'filter': 'cancelled'}) }}">Annulées</a>
+                </li>
+            </ul>
+        </div>
+        
+        {% if prestations is empty %}
+            <div class="alert alert-info">
+                <p class="mb-0">Vous n'avez aucune prestation pour le moment.</p>
+            </div>
+        {% else %}
+            <div class="row">
+                {% for prestation in prestations %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">{{ prestation.type }}</h5>
+                                {% if prestation.statut == 'programmé' %}
+                                    <span class="badge bg-primary">Programmée</span>
+                                {% elseif prestation.statut == 'en cours' %}
+                                    <span class="badge bg-info">En cours</span>
+                                {% elseif prestation.statut == 'terminee' %}
+                                    <span class="badge bg-success">Terminée</span>
+                                {% elseif prestation.statut == 'annulé' %}
+                                    <span class="badge bg-danger">Annulée</span>
+                                {% endif %}
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text">
+                                    <strong>Date:</strong> {{ prestation.date|date('d/m/Y') }}<br>
+                                    {% if prestation.service %}
+                                    <strong>Service:</strong> {{ prestation.service }}<br>
+                                    {% endif %}
+                                    {% if prestation.laboratoire %}
+                                    <strong>Laboratoire:</strong> {{ prestation.laboratoire }}<br>
+                                    {% endif %}
+                                    {% if prestation.prix %}
+                                    <strong>Prix:</strong> {{ prestation.prix|number_format(0, ',', ' ') }} FCFA<br>
+                                    {% endif %}
+                                </p>
+                                
+                                {% if prestation.statut == 'terminee' and prestation.resultat %}
+                                    <div class="alert alert-success">
+                                        <i class="bi bi-file-earmark-text"></i> Résultats disponibles
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="card-footer bg-transparent">
+                                <a href="{{ path('app_patient_prestation_show', {'id': prestation.id}) }}" class="btn btn-primary w-100">
+                                    <i class="bi bi-eye"></i> Détails
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+{% endblock %} 

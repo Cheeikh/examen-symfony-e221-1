@@ -1,0 +1,212 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes consultations - Clinique 221{% endblock %}
+
+{% block content %}
+    <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Mes consultations</h1>
+            <a href="{{ path('app_patient_consultation_new') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Prendre rendez-vous
+            </a>
+        </div>
+        
+        <ul class="nav nav-tabs mb-4">
+            <li class="nav-item">
+                <a class="nav-link {{ app.request.get('filter') == 'all' or app.request.get('filter') is null ? 'active' : '' }}" 
+                   href="{{ path('app_patient_consultation_index', {filter: 'all'}) }}">
+                   Toutes <span class="badge bg-secondary ms-1">{{ consultations|length }}</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ app.request.get('filter') == 'upcoming' ? 'active' : '' }}" 
+                   href="{{ path('app_patient_consultation_index', {filter: 'upcoming'}) }}">
+                   À venir <span class="badge bg-primary ms-1">{{ upcoming_count }}</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ app.request.get('filter') == 'past' ? 'active' : '' }}" 
+                   href="{{ path('app_patient_consultation_index', {filter: 'past'}) }}">
+                   Passées <span class="badge bg-secondary ms-1">{{ past_count }}</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ app.request.get('filter') == 'cancelled' ? 'active' : '' }}" 
+                   href="{{ path('app_patient_consultation_index', {filter: 'cancelled'}) }}">
+                   Annulées <span class="badge bg-secondary ms-1">{{ cancelled_count }}</span>
+                </a>
+            </li>
+        </ul>
+        
+        <div class="row">
+            {% if consultations|length > 0 %}
+                {% for consultation in consultations %}
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0">
+                                    <i class="bi bi-calendar-check"></i> 
+                                    {{ consultation.date|date('d/m/Y') }}
+                                </h5>
+                                {% if consultation.statut == 'planifie' %}
+                                    <span class="badge bg-primary">Planifiée</span>
+                                {% elseif consultation.statut == 'termine' %}
+                                    <span class="badge bg-success">Terminée</span>
+                                {% elseif consultation.statut == 'annule' %}
+                                    <span class="badge bg-danger">Annulée</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ consultation.statut|capitalize }}</span>
+                                {% endif %}
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text mb-0">
+                                    <strong>Date:</strong> {{ consultation.date|date('d/m/Y') }}<br>
+                                    <strong>Heure:</strong> {{ consultation.heure|date('H:i') }}<br>
+                                    <strong>Médecin:</strong> Dr. {{ consultation.medecin.nom }} {{ consultation.medecin.prenom }}<br>
+                                    {% if consultation.motif %}
+                                    <strong>Motif:</strong> {{ consultation.motif }}
+                                    {% endif %}
+                                </p>
+                                
+                                {% if consultation.statut == 'planifie' %}
+                                    <div class="d-grid gap-2">
+                                        <a href="{{ path('app_patient_consultation_show', {id: consultation.id}) }}" class="btn btn-outline-primary">
+                                            <i class="bi bi-eye"></i> Détails
+                                        </a>
+                                        <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelModal{{ consultation.id }}">
+                                            <i class="bi bi-x-circle"></i> Annuler
+                                        </button>
+                                    </div>
+                                {% elseif consultation.statut == 'termine' %}
+                                    <div class="d-grid gap-2">
+                                        <a href="{{ path('app_patient_consultation_show', {id: consultation.id}) }}" class="btn btn-outline-primary">
+                                            <i class="bi bi-eye"></i> Voir le compte-rendu
+                                        </a>
+                                        {% if consultation.prestations|length > 0 %}
+                                            <a href="{{ path('app_patient_prestation_list', {consultation: consultation.id}) }}" class="btn btn-outline-info">
+                                                <i class="bi bi-list-check"></i> Voir les prestations ({{ consultation.prestations|length }})
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                {% else %}
+                                    <div class="d-grid">
+                                        <a href="{{ path('app_patient_consultation_show', {id: consultation.id}) }}" class="btn btn-outline-secondary">
+                                            <i class="bi bi-eye"></i> Détails
+                                        </a>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="card-footer text-muted">
+                                {% if consultation.statut == 'planifie' %}
+                                    {% set jours_restants = (consultation.date|date('U') - 'now'|date('U')) / 86400 %}
+                                    {% if jours_restants > 1 %}
+                                        <small>Dans {{ jours_restants|round }} jours</small>
+                                    {% elseif jours_restants > 0 %}
+                                        <small>Demain</small>
+                                    {% else %}
+                                        <small>Aujourd'hui</small>
+                                    {% endif %}
+                                {% else %}
+                                    <div class="d-flex justify-content-between">
+                                        <small>Demande: {{ consultation.createdAt|date('d/m/Y') }}</small>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Modal d'annulation -->
+                        {% if consultation.statut == 'planifie' %}
+                            <div class="modal fade" id="cancelModal{{ consultation.id }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Annuler la consultation</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p>Êtes-vous sûr de vouloir annuler votre consultation du {{ consultation.date|date('d/m/Y') }} à {{ consultation.heure|date('H:i') }} avec Dr. {{ consultation.medecin.nom }} ?</p>
+                                            
+                                            <div class="alert alert-warning">
+                                                <i class="bi bi-exclamation-triangle"></i> 
+                                                <strong>Attention:</strong> L'annulation moins de 24h avant le rendez-vous peut entraîner des frais.
+                                            </div>
+                                            
+                                            <form id="cancelForm{{ consultation.id }}" action="{{ path('app_patient_consultation_cancel', {id: consultation.id}) }}" method="post">
+                                                <div class="mb-3">
+                                                    <label for="motifAnnulation" class="form-label">Motif d'annulation</label>
+                                                    <select class="form-select" id="motifAnnulation" name="motif_annulation" required>
+                                                        <option value="">Sélectionnez un motif</option>
+                                                        <option value="indisponibilite">Indisponibilité</option>
+                                                        <option value="amelioration">Amélioration de l'état de santé</option>
+                                                        <option value="autre_medecin">Consultation avec un autre médecin</option>
+                                                        <option value="autre">Autre motif</option>
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="commentaire" class="form-label">Commentaire (optionnel)</label>
+                                                    <textarea class="form-control" id="commentaire" name="commentaire" rows="3"></textarea>
+                                                </div>
+                                                <input type="hidden" name="token" value="{{ csrf_token('cancel-consultation') }}">
+                                            </form>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Retour</button>
+                                            <button type="submit" form="cancelForm{{ consultation.id }}" class="btn btn-danger">Confirmer l'annulation</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        <h4 class="alert-heading"><i class="bi bi-info-circle"></i> Aucune consultation</h4>
+                        <p>Vous n'avez pas encore de consultations {{ app.request.get('filter') == 'upcoming' ? 'à venir' : (app.request.get('filter') == 'past' ? 'passées' : (app.request.get('filter') == 'cancelled' ? 'annulées' : '')) }}.</p>
+                        <hr>
+                        <p class="mb-0">
+                            <a href="{{ path('app_patient_consultation_new') }}" class="btn btn-primary">
+                                <i class="bi bi-plus-circle"></i> Prendre rendez-vous
+                            </a>
+                        </p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        
+        {% if consultations|length > 0 %}
+            <div class="d-flex justify-content-center mt-4">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination">
+                        {% if page > 1 %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ path('app_patient_consultation_index', {page: page-1, filter: app.request.get('filter')}) }}">Précédent</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">Précédent</span>
+                            </li>
+                        {% endif %}
+                        
+                        {% for p in 1..pages_total %}
+                            <li class="page-item {{ p == page ? 'active' : '' }}">
+                                <a class="page-link" href="{{ path('app_patient_consultation_index', {page: p, filter: app.request.get('filter')}) }}">{{ p }}</a>
+                            </li>
+                        {% endfor %}
+                        
+                        {% if page < pages_total %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ path('app_patient_consultation_index', {page: page+1, filter: app.request.get('filter')}) }}">Suivant</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">Suivant</span>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %} 

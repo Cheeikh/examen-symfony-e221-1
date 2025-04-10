@@ -1,0 +1,139 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes rendez-vous - Clinique 221{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Mes rendez-vous</h1>
+        <a href="{{ path('app_patient_dashboard') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Retour au tableau de bord
+        </a>
+    </div>
+    
+    {% for message in app.flashes('success') %}
+        <div class="alert alert-success">
+            {{ message }}
+        </div>
+    {% endfor %}
+    
+    {% for message in app.flashes('error') %}
+        <div class="alert alert-danger">
+            {{ message }}
+        </div>
+    {% endfor %}
+    
+    <div class="mb-4">
+        <ul class="nav nav-tabs">
+            <li class="nav-item">
+                <a class="nav-link active" href="{{ path('app_patient_rdv_list') }}">Tous ({{ rendez_vous|length }})</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ path('app_patient_rdv_list', {'filter': 'upcoming'}) }}">À venir</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ path('app_patient_rdv_list', {'filter': 'past'}) }}">Passés</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ path('app_patient_rdv_list', {'filter': 'cancelled'}) }}">Annulés</a>
+            </li>
+        </ul>
+    </div>
+    
+    <div class="mb-4">
+        <a href="{{ path('app_patient_rdv_new') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Demander un rendez-vous
+        </a>
+    </div>
+    
+    {% if rendez_vous is empty %}
+        <div class="alert alert-info">
+            <p class="mb-0">Vous n'avez aucun rendez-vous pour le moment.</p>
+        </div>
+    {% else %}
+        <div class="row">
+            {% for rdv in rendez_vous %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">{% if rdv.isConsultation %}Consultation{% else %}Prestation{% endif %}</h5>
+                            {% if rdv.statut == 'demande' %}
+                                <span class="badge bg-warning text-dark">Demande</span>
+                            {% elseif rdv.statut == 'valide' %}
+                                <span class="badge bg-success">Validé</span>
+                            {% elseif rdv.statut == 'annule' %}
+                                <span class="badge bg-danger">Annulé</span>
+                            {% endif %}
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text">
+                                <strong>Date:</strong> {{ rdv.date|date('d/m/Y') }}<br>
+                                <strong>Heure:</strong> {{ rdv.heure ? rdv.heure|date('H:i') : 'Non définie' }}<br>
+                                {% if rdv.medecin %}
+                                <strong>Médecin:</strong> Dr. {{ rdv.medecin.nom }} {{ rdv.medecin.prenom }}<br>
+                                {% endif %}
+                                {% if rdv.motif %}
+                                <strong>Motif:</strong> {{ rdv.motif }}<br>
+                                {% endif %}
+                                {% if rdv.type %}
+                                <strong>Type:</strong> {{ rdv.type|capitalize }}<br>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            {% if rdv.isConsultation and rdv.consultation %}
+                                <a href="{{ path('app_patient_consultation_show', {'id': rdv.id}) }}" class="btn btn-primary w-100">
+                                    <i class="bi bi-eye"></i> Détails
+                                </a>
+                            {% elseif rdv.isPrestation and rdv.prestation %}
+                                <a href="{{ path('app_patient_prestation_show', {'id': rdv.prestation.id}) }}" class="btn btn-primary w-100">
+                                    <i class="bi bi-eye"></i> Détails
+                                </a>
+                            {% else %}
+                                <div class="btn-group w-100" role="group">
+                                    {% if rdv.statut != 'annule' %}
+                                        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelModal{{ rdv.id }}">
+                                            <i class="bi bi-x-circle"></i> Annuler
+                                        </button>
+                                    {% endif %}
+                                    {% if rdv.statut == 'valide' and rdv.isConsultation %}
+                                        <a href="{{ path('app_patient_consultation_reschedule', {'id': rdv.id}) }}" class="btn btn-outline-primary">
+                                            <i class="bi bi-clock"></i> Reporter
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                {% if rdv.statut != 'annule' %}
+                <!-- Modal d'annulation -->
+                <div class="modal fade" id="cancelModal{{ rdv.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Confirmer l'annulation</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Êtes-vous sûr de vouloir annuler ce rendez-vous du {{ rdv.date|date('d/m/Y') }} ?</p>
+                                <p class="text-danger">Cette action est irréversible.</p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                                {% if rdv.isConsultation %}
+                                    <a href="{{ path('app_patient_consultation_cancel', {'id': rdv.id}) }}" class="btn btn-danger">Confirmer l'annulation</a>
+                                {% elseif rdv.isPrestation and rdv.prestation %}
+                                    <a href="{{ path('app_patient_prestation_cancel', {'id': rdv.prestation.id}) }}" class="btn btn-danger">Confirmer l'annulation</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %} 

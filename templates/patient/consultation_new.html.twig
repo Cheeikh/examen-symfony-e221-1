@@ -1,0 +1,367 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Prendre un rendez-vous - Clinique 221{% endblock %}
+
+{% block content %}
+    <div class="container py-4">
+        <h1 class="mb-4">Prendre un rendez-vous</h1>
+        
+        <div class="mb-4">
+            <a href="{{ path('app_patient_dashboard') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Retour au tableau de bord
+            </a>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">Nouveau rendez-vous</h5>
+                    </div>
+                    <div class="card-body">
+                        {{ form_start(form, {'attr': {'novalidate': 'novalidate', 'id': 'consultation-form'}}) }}
+                            <div class="mb-3">
+                                {{ form_label(form.type, 'Type de consultation', {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.type, {'attr': {'class': 'form-select'}}) }}
+                                {{ form_errors(form.type) }}
+                                <div class="form-text">Sélectionnez le type de consultation dont vous avez besoin</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                {{ form_label(form.service, 'Service', {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.service, {'attr': {'class': 'form-select'}}) }}
+                                {{ form_errors(form.service) }}
+                            </div>
+                            
+                            <div class="mb-3">
+                                {{ form_label(form.medecin, 'Médecin', {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.medecin, {'attr': {'class': 'form-select'}}) }}
+                                {{ form_errors(form.medecin) }}
+                                <div class="form-text">Si vous n'avez pas de préférence, laissez ce champ vide</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                {{ form_label(form.motif, 'Motif de la consultation', {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.motif, {'attr': {'class': 'form-control', 'rows': 3}}) }}
+                                {{ form_errors(form.motif) }}
+                                <div class="form-text">Décrivez brièvement la raison de votre consultation</div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    {{ form_label(form.date, 'Date souhaitée', {'label_attr': {'class': 'form-label'}}) }}
+                                    {{ form_widget(form.date, {'attr': {'class': 'form-control', 'min': "now"|date('Y-m-d')}}) }}
+                                    {{ form_errors(form.date) }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form_label(form.heure, 'Heure souhaitée', {'label_attr': {'class': 'form-label'}}) }}
+                                    {{ form_widget(form.heure, {'attr': {'class': 'form-select'}}) }}
+                                    {{ form_errors(form.heure) }}
+                                </div>
+                            </div>
+                            
+                            {% if form.symptomes is defined %}
+                                <div class="mb-3">
+                                    {{ form_label(form.symptomes, 'Symptômes', {'label_attr': {'class': 'form-label'}}) }}
+                                    {{ form_widget(form.symptomes, {'attr': {'class': 'form-control', 'rows': 4}}) }}
+                                    {{ form_errors(form.symptomes) }}
+                                    <div class="form-text">Décrivez vos symptômes de façon détaillée pour aider le médecin</div>
+                                </div>
+                            {% endif %}
+                            
+                            {% if form.urgence is defined %}
+                                <div class="mb-3">
+                                    {{ form_label(form.urgence, 'Niveau d\'urgence', {'label_attr': {'class': 'form-label'}}) }}
+                                    {{ form_widget(form.urgence, {'attr': {'class': 'form-select'}}) }}
+                                    {{ form_errors(form.urgence) }}
+                                </div>
+                            {% endif %}
+                            
+                            {% if form.commentaire is defined %}
+                                <div class="mb-3">
+                                    {{ form_label(form.commentaire, 'Commentaires additionnels', {'label_attr': {'class': 'form-label'}}) }}
+                                    {{ form_widget(form.commentaire, {'attr': {'class': 'form-control', 'rows': 3}}) }}
+                                    {{ form_errors(form.commentaire) }}
+                                </div>
+                            {% endif %}
+                            
+                            <div class="form-check mb-4">
+                                <input class="form-check-input" type="checkbox" id="termsCheck" required>
+                                <label class="form-check-label" for="termsCheck">
+                                    J'accepte les <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">conditions d'utilisation</a> et la <a href="#" data-bs-toggle="modal" data-bs-target="#privacyModal">politique de confidentialité</a>
+                                </label>
+                                <div class="invalid-feedback">
+                                    Vous devez accepter les conditions d'utilisation pour continuer
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="button" class="btn btn-secondary" onclick="window.location.href='{{ path('app_patient_dashboard') }}'">
+                                    Annuler
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-calendar-plus"></i> Confirmer le rendez-vous
+                                </button>
+                            </div>
+                        {{ form_end(form) }}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">Informations</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <h6 class="alert-heading"><i class="bi bi-info-circle"></i> Important</h6>
+                            <p class="small mb-0">Votre demande de rendez-vous sera examinée par notre équipe médicale. Vous recevrez une confirmation par email et SMS une fois votre rendez-vous validé.</p>
+                        </div>
+                        
+                        <h6 class="mt-3 mb-2">Délais d'attente estimés</h6>
+                        <ul class="list-group mb-3">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Médecine générale
+                                <span class="badge bg-primary rounded-pill">1-2 jours</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Dentiste
+                                <span class="badge bg-primary rounded-pill">3-5 jours</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Ophtalmologie
+                                <span class="badge bg-warning text-dark rounded-pill">1-2 semaines</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Cardiologie
+                                <span class="badge bg-warning text-dark rounded-pill">1-2 semaines</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Dermatologie
+                                <span class="badge bg-warning text-dark rounded-pill">1-2 semaines</span>
+                            </li>
+                        </ul>
+                        
+                        <h6 class="mb-2">Heures d'ouverture</h6>
+                        <ul class="list-group">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Lundi - Vendredi
+                                <span>08:00 - 18:00</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Samedi
+                                <span>08:00 - 12:00</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Dimanche
+                                <span class="text-danger">Fermé</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">Besoin d'aide ?</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Si vous avez des questions ou besoin d'assistance pour prendre rendez-vous, n'hésitez pas à nous contacter :</p>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-telephone"></i> +221 33 123 45 67</li>
+                            <li><i class="bi bi-envelope"></i> contact@clinique221.sn</li>
+                        </ul>
+                        <div class="d-grid gap-2 mt-3">
+                            <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#contactModal">
+                                <i class="bi bi-chat"></i> Nous contacter
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal Conditions d'utilisation -->
+    <div class="modal fade" id="termsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Conditions d'utilisation</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <h6>1. Acceptation des conditions</h6>
+                    <p>En utilisant le service de prise de rendez-vous en ligne de la Clinique 221, vous acceptez les présentes conditions d'utilisation. Si vous n'acceptez pas ces conditions, veuillez ne pas utiliser ce service.</p>
+                    
+                    <h6>2. Prise de rendez-vous</h6>
+                    <p>La prise de rendez-vous via notre plateforme est soumise à validation par notre équipe médicale. Un rendez-vous n'est confirmé qu'après réception d'une confirmation par email ou SMS.</p>
+                    
+                    <h6>3. Annulation de rendez-vous</h6>
+                    <p>Vous pouvez annuler votre rendez-vous jusqu'à 48 heures avant la date prévue sans frais. Toute annulation effectuée moins de 48 heures avant le rendez-vous pourra entraîner des frais d'annulation.</p>
+                    
+                    <h6>4. Responsabilité</h6>
+                    <p>Les informations fournies lors de la prise de rendez-vous doivent être exactes et complètes. La Clinique 221 ne peut être tenue responsable des conséquences résultant d'informations incorrectes ou incomplètes.</p>
+                    
+                    <h6>5. Modification des conditions</h6>
+                    <p>La Clinique 221 se réserve le droit de modifier ces conditions à tout moment. Les modifications entreront en vigueur dès leur publication sur notre site.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal Politique de confidentialité -->
+    <div class="modal fade" id="privacyModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Politique de confidentialité</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <h6>1. Collecte des données</h6>
+                    <p>Nous collectons les informations personnelles et médicales nécessaires à la gestion de vos rendez-vous et à la fourniture de soins médicaux appropriés.</p>
+                    
+                    <h6>2. Utilisation des données</h6>
+                    <p>Les informations recueillies sont utilisées uniquement dans le cadre de la gestion de vos rendez-vous, de votre dossier médical et pour vous contacter concernant vos soins.</p>
+                    
+                    <h6>3. Protection des données</h6>
+                    <p>Nous mettons en œuvre des mesures de sécurité appropriées pour protéger vos informations personnelles et médicales contre tout accès non autorisé.</p>
+                    
+                    <h6>4. Partage des données</h6>
+                    <p>Vos informations peuvent être partagées avec d'autres professionnels de santé impliqués dans vos soins, avec votre consentement préalable.</p>
+                    
+                    <h6>5. Conservation des données</h6>
+                    <p>Vos données sont conservées conformément à la législation en vigueur sur la conservation des dossiers médicaux.</p>
+                    
+                    <h6>6. Vos droits</h6>
+                    <p>Vous disposez d'un droit d'accès, de rectification et de suppression de vos données personnelles, dans les limites prévues par la loi.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal Contact -->
+    <div class="modal fade" id="contactModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nous contacter</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="contactForm">
+                        <div class="mb-3">
+                            <label for="contactSubject" class="form-label">Sujet</label>
+                            <select class="form-select" id="contactSubject" required>
+                                <option value="">Sélectionnez un sujet</option>
+                                <option value="rdv">Question sur les rendez-vous</option>
+                                <option value="services">Question sur nos services</option>
+                                <option value="technique">Problème technique</option>
+                                <option value="autre">Autre question</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="contactMessage" class="form-label">Message</label>
+                            <textarea class="form-control" id="contactMessage" rows="5" required></textarea>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="contactCopy">
+                            <label class="form-check-label" for="contactCopy">
+                                Recevoir une copie de ce message
+                            </label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" form="contactForm" class="btn btn-primary">Envoyer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Validation du formulaire
+            const form = document.getElementById('consultation-form');
+            const termsCheck = document.getElementById('termsCheck');
+            
+            if (form) {
+                form.addEventListener('submit', function(event) {
+                    if (!termsCheck.checked) {
+                        event.preventDefault();
+                        termsCheck.classList.add('is-invalid');
+                    } else {
+                        termsCheck.classList.remove('is-invalid');
+                    }
+                });
+            }
+            
+            // Gestion dynamique des médecins en fonction du service
+            const serviceSelect = document.querySelector('#consultation_service');
+            const medecinSelect = document.querySelector('#consultation_medecin');
+            
+            if (serviceSelect && medecinSelect) {
+                serviceSelect.addEventListener('change', function() {
+                    // Réinitialiser la liste des médecins
+                    medecinSelect.innerHTML = '<option value="">Choisissez un médecin (optionnel)</option>';
+                    
+                    if (serviceSelect.value) {
+                        // Simuler un appel AJAX pour récupérer les médecins du service
+                        // Ceci devrait être remplacé par un vrai appel AJAX dans le code final
+                        setTimeout(function() {
+                            const medecins = getMedecinsByService(serviceSelect.value);
+                            
+                            medecins.forEach(function(medecin) {
+                                const option = document.createElement('option');
+                                option.value = medecin.id;
+                                option.textContent = 'Dr. ' + medecin.nom;
+                                medecinSelect.appendChild(option);
+                            });
+                        }, 300);
+                    }
+                });
+            }
+            
+            // Fonction simulant la récupération des médecins par service
+            function getMedecinsByService(serviceId) {
+                // Ceci est juste une démonstration et devrait être remplacé par des données réelles
+                const medecinsData = {
+                    '1': [ // Général
+                        {id: 1, nom: 'Ndiaye Abdoulaye'},
+                        {id: 2, nom: 'Diop Fatou'},
+                        {id: 3, nom: 'Sow Ibrahima'}
+                    ],
+                    '2': [ // Dentiste
+                        {id: 4, nom: 'Fall Aminata'},
+                        {id: 5, nom: 'Diallo Mamadou'}
+                    ],
+                    '3': [ // Ophtalmologie
+                        {id: 6, nom: 'Mbaye Moussa'},
+                        {id: 7, nom: 'Seck Marie'}
+                    ],
+                    '4': [ // Cardiologie
+                        {id: 8, nom: 'Ndiaye Aissatou'},
+                        {id: 9, nom: 'Kane Ousmane'}
+                    ],
+                    '5': [ // Dermatologie
+                        {id: 10, nom: 'Sarr Omar'},
+                        {id: 11, nom: 'Diop Sokhna'}
+                    ]
+                };
+                
+                return medecinsData[serviceId] || [];
+            }
+        });
+    </script>
+{% endblock %} 

@@ -1,0 +1,83 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Contact - {{ parent() }}{% endblock %}
+
+{% block body %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h1 class="card-title h3 mb-0">Contactez-nous</h1>
+                </div>
+                <div class="card-body">
+                    {% for label, messages in app.flashes %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ label }}" role="alert">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endfor %}
+
+                    <p class="mb-4">Remplissez le formulaire ci-dessous pour nous contacter. Nous vous répondrons dans les plus brefs délais.</p>
+                    
+                    {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form_row(form.nom) }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form_row(form.prenom) }}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form_row(form.email) }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form_row(form.sujet) }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form_row(form.message) }}
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Envoyer</button>
+                    </div>
+                    {{ form_end(form) }}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-5">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow">
+                <div class="card-header bg-light">
+                    <h2 class="card-title h4 mb-0">Informations de contact</h2>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h3 class="h5 mb-3">Adresse</h3>
+                            <address>
+                                <strong>Centre Médical</strong><br>
+                                123 Avenue des Soins<br>
+                                75000 Paris<br>
+                            </address>
+                        </div>
+                        <div class="col-md-6">
+                            <h3 class="h5 mb-3">Coordonnées</h3>
+                            <p><i class="fas fa-phone me-2"></i> 01 23 45 67 89</p>
+                            <p><i class="fas fa-envelope me-2"></i> contact@centremedical.com</p>
+                            <p><i class="fas fa-clock me-2"></i> Lun-Ven: 9h-18h | Sam: 9h-12h</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

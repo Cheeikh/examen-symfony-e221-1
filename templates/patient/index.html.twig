@@ -1,0 +1,146 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes rendez-vous - Clinique 221{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Mes rendez-vous</h1>
+    <a href="{{ path('app_patient_rdv_new') }}" class="btn btn-primary">
+        <i class="fas fa-plus-circle me-1"></i> Nouveau rendez-vous
+    </a>
+</div>
+
+{% if rendezVous is empty %}
+    <div class="alert alert-info">
+        <p class="mb-0">Vous n'avez pas encore de rendez-vous. Cliquez sur "Nouveau rendez-vous" pour en prendre un.</p>
+    </div>
+{% else %}
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="card-title mb-0">Rendez-vous à venir</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Heure</th>
+                            <th>Type</th>
+                            <th>Médecin</th>
+                            <th>Motif</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set hasUpcoming = false %}
+                        {% for rdv in rendezVous %}
+                            {% if rdv.date >= date() and rdv.statut != 'annule' %}
+                                {% set hasUpcoming = true %}
+                                <tr>
+                                    <td>{{ rdv.date|date('d/m/Y') }}</td>
+                                    <td>{{ rdv.heure|date('H:i') }}</td>
+                                    <td>
+                                        {% if rdv.isConsultation %}
+                                            <span class="badge bg-info">Consultation</span>
+                                        {% elseif rdv.isPrestation %}
+                                            <span class="badge bg-warning text-dark">Prestation</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Autre</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ rdv.medecin ? rdv.medecin.nom ~ ' ' ~ rdv.medecin.prenom : 'N/A' }}</td>
+                                    <td>{{ rdv.motif }}</td>
+                                    <td>
+                                        {% if rdv.statut == 'demande' %}
+                                            <span class="badge bg-secondary">En attente</span>
+                                        {% elseif rdv.statut == 'valide' %}
+                                            <span class="badge bg-success">Confirmé</span>
+                                        {% elseif rdv.statut == 'annule' %}
+                                            <span class="badge bg-danger">Annulé</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if rdv.peutEtreAnnule and rdv.statut != 'annule' %}
+                                            <a href="{{ path('app_patient_rdv_cancel', {'id': rdv.id}) }}" class="btn btn-sm btn-danger" onclick="return confirm('Êtes-vous sûr de vouloir annuler ce rendez-vous?')">
+                                                <i class="fas fa-times"></i> Annuler
+                                            </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if not hasUpcoming %}
+                            <tr>
+                                <td colspan="7" class="text-center">Aucun rendez-vous à venir</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-secondary text-white">
+            <h5 class="card-title mb-0">Historique des rendez-vous</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Heure</th>
+                            <th>Type</th>
+                            <th>Médecin</th>
+                            <th>Motif</th>
+                            <th>Statut</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set hasPast = false %}
+                        {% for rdv in rendezVous %}
+                            {% if rdv.date < date() or rdv.statut == 'annule' %}
+                                {% set hasPast = true %}
+                                <tr>
+                                    <td>{{ rdv.date|date('d/m/Y') }}</td>
+                                    <td>{{ rdv.heure|date('H:i') }}</td>
+                                    <td>
+                                        {% if rdv.isConsultation %}
+                                            <span class="badge bg-info">Consultation</span>
+                                        {% elseif rdv.isPrestation %}
+                                            <span class="badge bg-warning text-dark">Prestation</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Autre</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ rdv.medecin ? rdv.medecin.nom ~ ' ' ~ rdv.medecin.prenom : 'N/A' }}</td>
+                                    <td>{{ rdv.motif }}</td>
+                                    <td>
+                                        {% if rdv.statut == 'demande' %}
+                                            <span class="badge bg-secondary">En attente</span>
+                                        {% elseif rdv.statut == 'valide' %}
+                                            <span class="badge bg-success">Confirmé</span>
+                                        {% elseif rdv.statut == 'annule' %}
+                                            <span class="badge bg-danger">Annulé</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if not hasPast %}
+                            <tr>
+                                <td colspan="6" class="text-center">Aucun rendez-vous passé</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,512 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Consultation du {{ consultation.date|date('d/m/Y') }} - Clinique 221{% endblock %}
+
+{% block content %}
+    <div class="container py-4">
+        <div class="mb-4">
+            <a href="{{ path('app_patient_consultation_index') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Retour à mes consultations
+            </a>
+            {% if consultation.statut == 'planifie' %}
+                <button class="btn btn-outline-danger ms-2" data-bs-toggle="modal" data-bs-target="#cancelModal">
+                    <i class="bi bi-x-circle"></i> Annuler la consultation
+                </button>
+            {% endif %}
+        </div>
+        
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4 class="card-title mb-0">
+                            <i class="bi bi-calendar-check"></i> 
+                            Consultation du {{ consultation.date|date('d/m/Y') }}
+                        </h4>
+                        {% if consultation.statut == 'planifie' %}
+                            <span class="badge bg-primary">Planifiée</span>
+                        {% elseif consultation.statut == 'termine' %}
+                            <span class="badge bg-success">Terminée</span>
+                        {% elseif consultation.statut == 'annule' %}
+                            <span class="badge bg-danger">Annulée</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ consultation.statut|capitalize }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h5 class="mb-3">Informations générales</h5>
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span class="fw-bold">Date:</span>
+                                        <span>{{ consultation.date|date('d/m/Y') }}</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span class="fw-bold">Heure:</span>
+                                        <span>{{ consultation.heure|date('H:i') }}</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span class="fw-bold">Motif:</span>
+                                        <span>{{ consultation.motif }}</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span class="fw-bold">Durée prévue:</span>
+                                        <span>{{ consultation.duree }} minutes</span>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h5 class="mb-3">Informations médicales</h5>
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span class="fw-bold">Médecin:</span>
+                                        <span>Dr. {{ consultation.medecin.nom }}</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span class="fw-bold">Spécialité:</span>
+                                        <span>{{ consultation.medecin.specialite }}</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span class="fw-bold">Service:</span>
+                                        <span>{{ consultation.medecin.specialite }}</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span class="fw-bold">Lieu:</span>
+                                        <span>{{ consultation.salle ? consultation.salle : 'À définir' }}</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        {% if consultation.note is defined and consultation.note %}
+                            <div class="alert alert-info">
+                                <h5 class="alert-heading"><i class="bi bi-info-circle"></i> Note importante</h5>
+                                <p class="mb-0">{{ consultation.note }}</p>
+                            </div>
+                        {% endif %}
+                        
+                        {% if consultation.statut == 'planifie' %}
+                            <div class="alert alert-primary">
+                                <h5 class="alert-heading"><i class="bi bi-exclamation-triangle"></i> Préparation</h5>
+                                <p>Veuillez vous présenter 15 minutes avant l'heure de votre rendez-vous muni de :</p>
+                                <ul>
+                                    <li>Votre carte d'identité</li>
+                                    <li>Votre carte d'assurance maladie</li>
+                                    <li>Vos résultats d'examens récents (si applicable)</li>
+                                    <li>La liste de vos médicaments actuels</li>
+                                </ul>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                {% if consultation.statut == 'termine' and consultation.compteRendu is defined and consultation.compteRendu %}
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Compte-rendu de consultation</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if consultation.compteRendu.diagnostic is defined and consultation.compteRendu.diagnostic %}
+                                <div class="mb-4">
+                                    <h6 class="mb-2">Diagnostic</h6>
+                                    <p>{{ consultation.compteRendu.diagnostic|nl2br }}</p>
+                                </div>
+                            {% endif %}
+                            
+                            {% if consultation.compteRendu.traitement is defined and consultation.compteRendu.traitement %}
+                                <div class="mb-4">
+                                    <h6 class="mb-2">Traitement prescrit</h6>
+                                    <ul class="list-group list-group-flush">
+                                        {% for medicament in consultation.compteRendu.traitement %}
+                                            <li class="list-group-item">
+                                                <div class="fw-bold">{{ medicament.nom }}</div>
+                                                <div>{{ medicament.posologie }}</div>
+                                                <div class="text-muted small">{{ medicament.duree }}</div>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            {% endif %}
+                            
+                            {% if consultation.compteRendu.recommandations is defined and consultation.compteRendu.recommandations %}
+                                <div class="mb-4">
+                                    <h6 class="mb-2">Recommandations</h6>
+                                    <p>{{ consultation.compteRendu.recommandations|nl2br }}</p>
+                                </div>
+                            {% endif %}
+                            
+                            {% if consultation.compteRendu.suivi is defined and consultation.compteRendu.suivi %}
+                                <div>
+                                    <h6 class="mb-2">Suivi recommandé</h6>
+                                    <p>{{ consultation.compteRendu.suivi|nl2br }}</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="card-footer text-muted">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>Rédigé par Dr. {{ consultation.medecin.nom }}</span>
+                                <span>{{ consultation.dateFin|date('d/m/Y H:i') }}</span>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+                
+                {% if consultation.prestations|length > 0 %}
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Prestations prescrites</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Type</th>
+                                            <th>Date</th>
+                                            <th>Statut</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for prestation in consultation.prestations %}
+                                            <tr>
+                                                <td>
+                                                    {% if prestation.type == 'laboratoire' %}
+                                                        <i class="bi bi-flask"></i> 
+                                                    {% elseif prestation.type == 'imagerie' %}
+                                                        <i class="bi bi-scan"></i> 
+                                                    {% else %}
+                                                        <i class="bi bi-clipboard-pulse"></i> 
+                                                    {% endif %}
+                                                    {{ prestation.type|capitalize }}
+                                                </td>
+                                                <td>{{ prestation.date|date('d/m/Y') }}</td>
+                                                <td>
+                                                    {% if prestation.statut == 'planifie' %}
+                                                        <span class="badge bg-primary">Planifiée</span>
+                                                    {% elseif prestation.statut == 'termine' %}
+                                                        <span class="badge bg-success">Terminée</span>
+                                                    {% elseif prestation.statut == 'annule' %}
+                                                        <span class="badge bg-danger">Annulée</span>
+                                                    {% elseif prestation.statut == 'en_cours' %}
+                                                        <span class="badge bg-warning text-dark">En cours</span>
+                                                    {% else %}
+                                                        <span class="badge bg-secondary">{{ prestation.statut|capitalize }}</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <a href="{{ path('app_patient_prestation_show', {'id': prestation.id}) }}" class="btn btn-sm btn-outline-primary">
+                                                        <i class="bi bi-eye"></i> Détails
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="col-md-4">
+                {% if consultation.statut == 'planifie' %}
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Actions</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#rescheduleModal">
+                                    <i class="bi bi-calendar-plus"></i> Reprogrammer
+                                </button>
+                                <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelModal">
+                                    <i class="bi bi-x-circle"></i> Annuler
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Rappel</h5>
+                        </div>
+                        <div class="card-body">
+                            <form>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="reminder-email" checked>
+                                    <label class="form-check-label" for="reminder-email">
+                                        Email (24h avant)
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="reminder-sms" checked>
+                                    <label class="form-check-label" for="reminder-sms">
+                                        SMS (3h avant)
+                                    </label>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="reminder-custom" class="form-label">Rappel personnalisé</label>
+                                    <select class="form-select" id="reminder-custom">
+                                        <option value="">Aucun</option>
+                                        <option value="1">1 jour avant</option>
+                                        <option value="2">2 jours avant</option>
+                                        <option value="3">3 jours avant</option>
+                                        <option value="7">1 semaine avant</option>
+                                    </select>
+                                </div>
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                {% endif %}
+                
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Médecin</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center mb-3">
+                            <img src="{{ asset('images/doctors/' ~ consultation.medecin.photo|default('doctor-default.jpg')) }}" 
+                                 class="rounded-circle img-thumbnail" alt="Photo du Dr. {{ consultation.medecin.nom }}"
+                                 style="width: 120px; height: 120px; object-fit: cover;">
+                        </div>
+                        <h5 class="card-title text-center mb-3">Dr. {{ consultation.medecin.nom }}</h5>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Spécialité:</span>
+                                <span class="fw-bold">{{ consultation.medecin.specialite }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Service:</span>
+                                <span class="fw-bold">{{ consultation.medecin.specialite }}</span>
+                            </li>
+                            {% if consultation.medecin.experience is defined %}
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Expérience:</span>
+                                    <span class="fw-bold">{{ consultation.medecin.experience }} ans</span>
+                                </li>
+                            {% endif %}
+                        </ul>
+                        
+                        {% if consultation.medecin.description is defined %}
+                            <div class="mt-3">
+                                <p class="card-text">{{ consultation.medecin.description|nl2br }}</p>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="d-grid gap-2 mt-3">
+                            <a href="{{ path('app_patient_medecin_profile', {'id': consultation.medecin.id}) }}" class="btn btn-outline-primary">
+                                <i class="bi bi-person-vcard"></i> Voir le profil complet
+                            </a>
+                            <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#contactModal">
+                                <i class="bi bi-envelope"></i> Contacter
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if consultation.statut == 'termine' %}
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Documents</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                <a href="{{ path('app_patient_consultation_pdf', {'id': consultation.id}) }}" class="btn btn-success">
+                                    <i class="bi bi-file-earmark-pdf"></i> Télécharger le compte-rendu
+                                </a>
+                                {% if consultation.compteRendu.ordonnance is defined and consultation.compteRendu.ordonnance %}
+                                    <a href="{{ path('app_patient_ordonnance_pdf', {'id': consultation.id}) }}" class="btn btn-outline-success">
+                                        <i class="bi bi-file-earmark-medical"></i> Télécharger l'ordonnance
+                                    </a>
+                                {% endif %}
+                                {% if consultation.compteRendu.arretTravail is defined and consultation.compteRendu.arretTravail %}
+                                    <a href="{{ path('app_patient_arret_travail_pdf', {'id': consultation.id}) }}" class="btn btn-outline-success">
+                                        <i class="bi bi-file-earmark-medical"></i> Télécharger l'arrêt de travail
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal d'annulation -->
+    {% if consultation.statut == 'planifie' %}
+        <div class="modal fade" id="cancelModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Annuler la consultation</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Êtes-vous sûr de vouloir annuler votre consultation du {{ consultation.date|date('d/m/Y') }} à {{ consultation.heure|date('H:i') }} avec Dr. {{ consultation.medecin.nom }} ?</p>
+                        
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i> 
+                            <strong>Attention:</strong> L'annulation moins de 24h avant le rendez-vous peut entraîner des frais.
+                        </div>
+                        
+                        <form id="cancelForm" action="{{ path('app_patient_consultation_cancel', {id: consultation.id}) }}" method="post">
+                            <div class="mb-3">
+                                <label for="motifAnnulation" class="form-label">Motif d'annulation</label>
+                                <select class="form-select" id="motifAnnulation" name="motif_annulation" required>
+                                    <option value="">Sélectionnez un motif</option>
+                                    <option value="indisponibilite">Indisponibilité</option>
+                                    <option value="amelioration">Amélioration de l'état de santé</option>
+                                    <option value="autre_medecin">Consultation avec un autre médecin</option>
+                                    <option value="autre">Autre motif</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="commentaire" class="form-label">Commentaire (optionnel)</label>
+                                <textarea class="form-control" id="commentaire" name="commentaire" rows="3"></textarea>
+                            </div>
+                            <input type="hidden" name="token" value="{{ csrf_token('cancel-consultation') }}">
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Retour</button>
+                        <button type="submit" form="cancelForm" class="btn btn-danger">Confirmer l'annulation</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal de reprogrammation -->
+        <div class="modal fade" id="rescheduleModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Reprogrammer la consultation</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="rescheduleForm" action="{{ path('app_patient_consultation_reschedule', {id: consultation.id}) }}" method="post">
+                            <div class="mb-3">
+                                <label for="newDate" class="form-label">Nouvelle date</label>
+                                <input type="date" class="form-control" id="newDate" name="new_date" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="newTime" class="form-label">Nouvel horaire</label>
+                                <select class="form-select" id="newTime" name="new_time" required>
+                                    <option value="">Sélectionnez un horaire</option>
+                                    <!-- Les horaires seront chargés dynamiquement  -->
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="raison" class="form-label">Raison du changement</label>
+                                <textarea class="form-control" id="raison" name="raison" rows="3"></textarea>
+                            </div>
+                            <input type="hidden" name="token" value="{{ csrf_token('reschedule-consultation') }}">
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" form="rescheduleForm" class="btn btn-primary">Confirmer</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+    
+    <!-- Modal de contact -->
+    <div class="modal fade" id="contactModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Contacter Dr. {{ consultation.medecin.nom }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="contactForm">
+                        <div class="mb-3">
+                            <label for="subject" class="form-label">Sujet</label>
+                            <select class="form-select" id="subject" required>
+                                <option value="">Sélectionnez un sujet</option>
+                                <option value="rdv">Question sur le rendez-vous</option>
+                                <option value="traitement">Question sur un traitement</option>
+                                <option value="resultat">Question sur des résultats</option>
+                                <option value="urgence">Urgence médicale</option>
+                                <option value="autre">Autre question</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="message" class="form-label">Message</label>
+                            <textarea class="form-control" id="message" rows="5" required></textarea>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="copyToEmail">
+                            <label class="form-check-label" for="copyToEmail">
+                                Recevoir une copie par email
+                            </label>
+                        </div>
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> Le médecin vous répondra dans les meilleurs délais. Pour les urgences, veuillez contacter directement le service des urgences au 33 800 00 00.
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" form="contactForm" class="btn btn-primary">Envoyer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    
+    <script>
+        // Script pour charger dynamiquement les horaires disponibles
+        document.addEventListener('DOMContentLoaded', function() {
+            const dateInput = document.getElementById('newDate');
+            const timeSelect = document.getElementById('newTime');
+            
+            if (dateInput && timeSelect) {
+                dateInput.addEventListener('change', function() {
+                    // Nettoyer les options existantes
+                    timeSelect.innerHTML = '<option value="">Sélectionnez un horaire</option>';
+                    
+                    if (dateInput.value) {
+                        // Simuler le chargement (à remplacer par un appel AJAX réel)
+                        setTimeout(function() {
+                            const availableTimes = [
+                                {value: '08:00', label: '08h00'},
+                                {value: '08:30', label: '08h30'},
+                                {value: '09:00', label: '09h00'},
+                                {value: '09:30', label: '09h30'},
+                                {value: '10:00', label: '10h00'},
+                                {value: '10:30', label: '10h30'},
+                                {value: '11:00', label: '11h00'},
+                                {value: '11:30', label: '11h30'},
+                                {value: '14:00', label: '14h00'},
+                                {value: '14:30', label: '14h30'},
+                                {value: '15:00', label: '15h00'},
+                                {value: '15:30', label: '15h30'},
+                                {value: '16:00', label: '16h00'},
+                                {value: '16:30', label: '16h30'},
+                                {value: '17:00', label: '17h00'}
+                            ];
+                            
+                            availableTimes.forEach(function(time) {
+                                const option = document.createElement('option');
+                                option.value = time.value;
+                                option.textContent = time.label;
+                                timeSelect.appendChild(option);
+                            });
+                        }, 500);
+                    }
+                });
+            }
+        });
+    </script>
+{% endblock %}

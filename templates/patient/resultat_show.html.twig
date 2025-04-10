@@ -1,0 +1,97 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Résultat - Clinique 221{% endblock %}
+
+{% block content %}
+    <div class="container py-4">
+        <h1 class="mb-4">Résultat de l'examen</h1>
+
+        <div class="mb-4">
+            <a href="{{ path('app_patient_prestation_show', {'id': resultat.prestation.id}) }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Retour à la prestation
+            </a>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">{{ resultat.prestation.type }} - Résultat #{{ resultat.id }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span class="fw-bold">Type d'examen:</span>
+                                <span>{{ resultat.prestation.type }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span class="fw-bold">Date de l'examen:</span>
+                                <span>{{ resultat.prestation.date|date('d/m/Y') }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span class="fw-bold">Date du résultat:</span>
+                                <span>{{ resultat.dateResultat|date('d/m/Y') }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span class="fw-bold">Laboratoire:</span>
+                                <span>{{ resultat.prestation.laboratoire }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span class="fw-bold">Technicien:</span>
+                                <span>{{ resultat.prestation.technicien }}</span>
+                            </li>
+                            {% if resultat.fichier %}
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span class="fw-bold">Fichier:</span>
+                                <span>{{ resultat.fichier }}</span>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Résultats</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="result-content">
+                            {{ resultat.contenu|nl2br }}
+                        </div>
+                    </div>
+                </div>
+
+                {% if resultat.commentaire %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Commentaire du technicien</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info mb-0">
+                            {{ resultat.commentaire|nl2br }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{{ path('app_patient_prestation_show', {'id': resultat.prestation.id}) }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Retour
+                    </a>
+                    <div>
+                        <a href="{{ path('app_patient_resultat_download', {'id': resultat.id}) }}" class="btn btn-success">
+                            <i class="bi bi-download"></i> Télécharger le PDF
+                        </a>
+                        <a href="{{ path('app_patient_resultat_email', {'id': resultat.id}) }}" class="btn btn-primary">
+                            <i class="bi bi-envelope"></i> Recevoir par email
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %} 

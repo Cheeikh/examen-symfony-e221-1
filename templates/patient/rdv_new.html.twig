@@ -1,0 +1,258 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouveau rendez-vous{% endblock %}
+
+{% block content %}
+<div class="container animate__animated animate__fadeIn py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ path('app_patient_dashboard') }}">Tableau de bord</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Nouveau rendez-vous</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card border-0 shadow-sm rounded-lg">
+                <div class="card-header bg-white py-3">
+                    <h1 class="h3 mb-0 text-center">Prendre un rendez-vous</h1>
+                </div>
+                <div class="card-body p-4">
+                    <div class="appointment-stepper mb-5">
+                        <div class="stepper-progress mb-4">
+                            <div class="progress" style="height: 5px;">
+                                <div class="progress-bar" role="progressbar" style="width: 25%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <div class="d-flex justify-content-between mt-2">
+                                <div class="step active">
+                                    <div class="step-icon">1</div>
+                                    <div class="step-label">Type</div>
+                                </div>
+                                <div class="step">
+                                    <div class="step-icon">2</div>
+                                    <div class="step-label">Date</div>
+                                </div>
+                                <div class="step">
+                                    <div class="step-icon">3</div>
+                                    <div class="step-label">Confirmation</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': 'novalidate'}}) }}
+                        <div class="mb-4">
+                            <div class="form-label fw-bold">Type de consultation</div>
+                            <div class="appointment-types row gx-3">
+                                {% for choice in form.type.vars.choices %}
+                                <div class="col-md-6 mb-3">
+                                    <input type="radio" class="btn-check" name="{{ form.type.vars.full_name }}" id="type_{{ choice.value }}" value="{{ choice.value }}" autocomplete="off" {% if form.type.vars.value == choice.value %}checked{% endif %}>
+                                    <label class="btn btn-outline-primary w-100 text-start d-flex align-items-center p-3" for="type_{{ choice.value }}">
+                                        <span class="appointment-icon me-3">
+                                            {% if choice.value == 'generaliste' %}
+                                                <i class="fas fa-user-md fa-2x"></i>
+                                            {% elseif choice.value == 'specialiste' %}
+                                                <i class="fas fa-stethoscope fa-2x"></i>
+                                            {% elseif choice.value == 'dentiste' %}
+                                                <i class="fas fa-tooth fa-2x"></i>
+                                            {% elseif choice.value == 'pediatre' %}
+                                                <i class="fas fa-baby fa-2x"></i>
+                                            {% else %}
+                                                <i class="fas fa-hospital-user fa-2x"></i>
+                                            {% endif %}
+                                        </span>
+                                        <span>
+                                            <span class="d-block fw-bold">{{ choice.label }}</span>
+                                            <small class="text-muted">
+                                                {% if choice.value == 'generaliste' %}
+                                                    Consultation générale pour adultes
+                                                {% elseif choice.value == 'specialiste' %}
+                                                    Consultation avec un médecin spécialiste
+                                                {% elseif choice.value == 'dentiste' %}
+                                                    Soins dentaires et examens bucco-dentaires
+                                                {% elseif choice.value == 'pediatre' %}
+                                                    Consultation pour enfants (0-15 ans)
+                                                {% else %}
+                                                    Autre type de consultation
+                                                {% endif %}
+                                            </small>
+                                        </span>
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="form-error">
+                                {{ form_errors(form.type) }}
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="form-label fw-bold">Motif du rendez-vous</div>
+                            {{ form_widget(form.motif, {'attr': {'class': 'form-control', 'placeholder': 'Décrivez brièvement la raison de votre visite...'}}) }}
+                            <div class="form-text">Cette information aidera le médecin à mieux préparer votre rendez-vous.</div>
+                            <div class="form-error">
+                                {{ form_errors(form.motif) }}
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="form-label fw-bold">Date</div>
+                                {{ form_widget(form.date, {'attr': {'class': 'form-control datepicker', 'placeholder': 'Sélectionnez une date'}}) }}
+                                <div class="form-error">
+                                    {{ form_errors(form.date) }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-label fw-bold">Heure</div>
+                                {{ form_widget(form.time, {'attr': {'class': 'form-control', 'placeholder': 'Sélectionnez une heure'}}) }}
+                                <div class="form-error">
+                                    {{ form_errors(form.time) }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="form-label fw-bold">Médecin</div>
+                            {{ form_widget(form.doctor, {'attr': {'class': 'form-select'}}) }}
+                            <div class="form-text">Laissez vide si vous n'avez pas de préférence de médecin.</div>
+                            <div class="form-error">
+                                {{ form_errors(form.doctor) }}
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="form-check">
+                                {{ form_widget(form.urgence, {'attr': {'class': 'form-check-input'}}) }}
+                                <label class="form-check-label" for="{{ form.urgence.vars.id }}">
+                                    Rendez-vous urgent
+                                </label>
+                            </div>
+                            <div class="form-text">Cochez cette case uniquement si votre condition nécessite une attention médicale rapide.</div>
+                            <div class="form-error">
+                                {{ form_errors(form.urgence) }}
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-5">
+                            <a href="{{ path('app_patient_dashboard') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i> Annuler
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                Continuer <i class="fas fa-arrow-right ms-2"></i>
+                            </button>
+                        </div>
+                    {{ form_end(form) }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .appointment-stepper .step {
+        text-align: center;
+        width: 33.3%;
+    }
+    
+    .appointment-stepper .step-icon {
+        width: 30px;
+        height: 30px;
+        line-height: 30px;
+        background-color: #e9ecef;
+        border-radius: 50%;
+        margin: 0 auto 5px;
+        font-weight: bold;
+        font-size: 14px;
+    }
+    
+    .appointment-stepper .step.active .step-icon {
+        background-color: var(--bs-primary);
+        color: white;
+    }
+    
+    .appointment-stepper .step.active .step-label {
+        font-weight: bold;
+        color: var(--bs-primary);
+    }
+    
+    .appointment-types label {
+        cursor: pointer;
+        height: 100%;
+        border-radius: 0.5rem;
+        transition: all 0.2s ease;
+    }
+    
+    .appointment-types label:hover {
+        border-color: var(--bs-primary);
+    }
+    
+    .appointment-types .btn-check:checked + label {
+        background-color: rgba(var(--bs-primary-rgb), 0.1);
+    }
+    
+    .appointment-icon {
+        color: var(--bs-primary);
+    }
+    
+    .form-error {
+        color: var(--bs-danger);
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+</style>
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Form validation
+        const form = document.querySelector('.needs-validation');
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        });
+        
+        // Update progress bar based on form completion
+        const formElements = form.querySelectorAll('input, select, textarea');
+        formElements.forEach(element => {
+            element.addEventListener('change', updateProgress);
+        });
+        
+        function updateProgress() {
+            let filledFields = 0;
+            const requiredFields = form.querySelectorAll('[required]');
+            requiredFields.forEach(field => {
+                if (field.value.trim() !== '') {
+                    filledFields++;
+                }
+            });
+            
+            const progressPercentage = Math.min(Math.round((filledFields / requiredFields.length) * 100), 100);
+            const progressBar = document.querySelector('.progress-bar');
+            progressBar.style.width = progressPercentage + '%';
+            progressBar.setAttribute('aria-valuenow', progressPercentage);
+            
+            // Update stepper
+            const steps = document.querySelectorAll('.step');
+            steps.forEach((step, index) => {
+                step.classList.remove('active');
+                if (progressPercentage >= (index + 1) * 33) {
+                    step.classList.add('active');
+                }
+            });
+            
+            // Always keep first step active
+            steps[0].classList.add('active');
+        }
+        
+        // Initial progress calculation
+        updateProgress();
+    });
+</script>
+{% endblock %}
+{% endblock %} 
