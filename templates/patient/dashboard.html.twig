@@ -3,6 +3,10 @@
 {% block title %}Tableau de bord - Espace Patient{% endblock %}
 
 {% block content %}
+{# Define default variables #}
+{% set antecedents = antecedents is defined ? antecedents : {} %}
+{% set unread_count = unread_count is defined ? unread_count : 0 %}
+
 <div class="container-fluid py-4">
     <!-- Header with greeting and date -->
     <div class="row align-items-center mb-4">
@@ -29,7 +33,7 @@
                         </div>
                         <h5 class="card-title mb-0">Prochains rendez-vous</h5>
                     </div>
-                    {% if rdvs_upcoming is empty %}
+                    {% if upcoming_consultations is empty %}
                         <div class="text-center p-4">
                             <div class="empty-state mb-3">
                                 <i class="bi bi-calendar text-muted opacity-50 fs-1"></i>
@@ -41,7 +45,7 @@
                         </div>
                     {% else %}
                         <div class="list-group list-group-flush">
-                            {% for rdv in rdvs_upcoming|slice(0, 3) %}
+                            {% for rdv in upcoming_consultations|slice(0, 3) %}
                                 <div class="list-group-item px-0 py-3 border-0 border-bottom">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div>
@@ -54,11 +58,11 @@
                                         <div class="text-end">
                                             <div class="mb-1 small">
                                                 <i class="bi bi-calendar-date me-1"></i>
-                                                {{ rdv.dateHeure|date('d/m/Y') }}
+                                                {{ rdv.date|date('d/m/Y') }}
                                             </div>
                                             <div class="small">
                                                 <i class="bi bi-clock me-1"></i>
-                                                {{ rdv.dateHeure|date('H:i') }}
+                                                {{ rdv.heure|date('H:i') }}
                                             </div>
                                         </div>
                                     </div>
@@ -66,17 +70,17 @@
                                         <button class="btn btn-sm btn-outline-danger me-1" data-bs-toggle="modal" data-bs-target="#cancelModal{{ rdv.id }}">
                                             <i class="bi bi-x-circle me-1"></i>Annuler
                                         </button>
-                                        <a href="{{ path('app_patient_rdv_show', {'id': rdv.id}) }}" class="btn btn-sm btn-outline-primary">
+                                        <a href="{{ path('app_patient_consultation_show', {'id': rdv.id}) }}" class="btn btn-sm btn-outline-primary">
                                             <i class="bi bi-eye me-1"></i>Détails
                                         </a>
                                     </div>
                                 </div>
                             {% endfor %}
                         </div>
-                        {% if rdvs_upcoming|length > 3 %}
+                        {% if upcoming_consultations|length > 3 %}
                             <div class="text-center mt-3">
-                                <a href="{{ path('app_patient_rdvs') }}" class="btn btn-link text-decoration-none">
-                                    Voir tous les rendez-vous ({{ rdvs_upcoming|length }})
+                                <a href="{{ path('app_patient_rdv_list') }}" class="btn btn-link text-decoration-none">
+                                    Voir tous les rendez-vous ({{ upcoming_consultations|length }})
                                 </a>
                             </div>
                         {% endif %}
@@ -90,61 +94,54 @@
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
                     <div class="d-flex align-items-center mb-3">
-                        <div class="icon-circle bg-success text-white me-3">
-                            <i class="bi bi-clipboard2-check"></i>
+                        <div class="icon-circle bg-info text-white me-3">
+                            <i class="bi bi-clipboard2-pulse"></i>
                         </div>
                         <h5 class="card-title mb-0">Services récents</h5>
                     </div>
-                    {% if prestations_recent is empty %}
+                    {% if recent_prestations is empty %}
                         <div class="text-center p-4">
                             <div class="empty-state mb-3">
-                                <i class="bi bi-clipboard2 text-muted opacity-50 fs-1"></i>
+                                <i class="bi bi-clipboard-x text-muted opacity-50 fs-1"></i>
                             </div>
                             <p class="text-muted">Aucun service récent</p>
+                            <a href="{{ path('app_patient_prestation_list') }}" class="btn btn-sm btn-outline-info mt-2">
+                                Voir tous les services
+                            </a>
                         </div>
                     {% else %}
                         <div class="list-group list-group-flush">
-                            {% for prestation in prestations_recent|slice(0, 3) %}
+                            {% for prestation in recent_prestations|slice(0, 3) %}
                                 <div class="list-group-item px-0 py-3 border-0 border-bottom">
-                                    <div class="d-flex justify-content-between align-items-center">
+                                    <div class="d-flex justify-content-between">
                                         <div>
                                             <span class="d-block mb-1 fw-semibold">{{ prestation.type }}</span>
-                                            <div class="d-flex align-items-center text-muted small">
-                                                {% if prestation.laboratoire %}
-                                                    <i class="bi bi-building me-1"></i>
-                                                    <span>{{ prestation.laboratoire }}</span>
-                                                {% elseif prestation.technicien %}
-                                                    <i class="bi bi-person me-1"></i>
-                                                    <span>{{ prestation.technicien }}</span>
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                        <div class="text-end">
-                                            <div class="mb-1 small">
-                                                <i class="bi bi-calendar-date me-1"></i>
-                                                {{ prestation.date|date('d/m/Y') }}
-                                            </div>
-                                            <span class="badge rounded-pill 
-                                                {% if prestation.statut == 'terminé' %}bg-success
-                                                {% elseif prestation.statut == 'en cours' %}bg-warning
+                                            <span class="badge 
+                                                {% if prestation.statut == 'en attente' %}bg-warning
+                                                {% elseif prestation.statut == 'terminé' %}bg-success
                                                 {% elseif prestation.statut == 'annulé' %}bg-danger
-                                                {% else %}bg-info{% endif %}">
+                                                {% else %}bg-info{% endif %}
+                                            ">
                                                 {{ prestation.statut|capitalize }}
                                             </span>
                                         </div>
-                                    </div>
-                                    <div class="mt-2">
-                                        <a href="{{ path('app_patient_prestation_show', {'id': prestation.id}) }}" class="btn btn-sm btn-outline-primary">
-                                            <i class="bi bi-eye me-1"></i>Détails
-                                        </a>
+                                        <div class="text-end">
+                                            <div class="small mb-1">
+                                                <i class="bi bi-calendar-date me-1"></i>
+                                                {{ prestation.date|date('d/m/Y') }}
+                                            </div>
+                                            <a href="{{ path('app_patient_prestation_show', {'id': prestation.id}) }}" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-eye me-1"></i>Détails
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
                             {% endfor %}
                         </div>
-                        {% if prestations_recent|length > 3 %}
+                        {% if recent_prestations|length > 3 %}
                             <div class="text-center mt-3">
-                                <a href="{{ path('app_patient_prestations') }}" class="btn btn-link text-decoration-none">
-                                    Voir tous les services ({{ prestations_recent|length }})
+                                <a href="{{ path('app_patient_prestation_list') }}" class="btn btn-link text-decoration-none">
+                                    Voir tous les services ({{ recent_prestations|length }})
                                 </a>
                             </div>
                         {% endif %}
@@ -165,7 +162,7 @@
                     </div>
                     <div class="row g-3">
                         <div class="col-md-6 col-sm-6">
-                            <a href="{{ path('app_patient_dossier_medical') }}" class="quick-link-card card border-0 h-100 text-decoration-none">
+                            <a href="{{ path('app_patient_medical_record') }}" class="quick-link-card card border-0 h-100 text-decoration-none">
                                 <div class="card-body p-3">
                                     <div class="d-flex align-items-center">
                                         <div class="icon-square bg-primary-subtle text-primary me-3">
@@ -192,7 +189,7 @@
                             </a>
                         </div>
                         <div class="col-md-6 col-sm-6">
-                            <a href="{{ path('app_patient_prestations') }}" class="quick-link-card card border-0 h-100 text-decoration-none">
+                            <a href="{{ path('app_patient_prestation_list') }}" class="quick-link-card card border-0 h-100 text-decoration-none">
                                 <div class="card-body p-3">
                                     <div class="d-flex align-items-center">
                                         <div class="icon-square bg-primary-subtle text-primary me-3">
@@ -234,7 +231,7 @@
                             </div>
                             <h5 class="card-title mb-0">Historique médical</h5>
                         </div>
-                        <a href="{{ path('app_patient_dossier_medical') }}" class="btn btn-sm btn-outline-primary">
+                        <a href="{{ path('app_patient_medical_record') }}" class="btn btn-sm btn-outline-primary">
                             <i class="bi bi-arrow-right me-1"></i>Voir tout
                         </a>
                     </div>
@@ -263,7 +260,7 @@
                     <div class="tab-content" id="medicalHistoryTabContent">
                         <!-- Consultations tab -->
                         <div class="tab-pane fade show active" id="consultations-tab-pane" role="tabpanel" tabindex="0">
-                            {% if rdvs_past is empty %}
+                            {% if recent_consultations is empty %}
                                 <div class="text-center py-4">
                                     <div class="empty-state mb-3">
                                         <i class="bi bi-calendar-x text-muted opacity-50 fs-4"></i>
@@ -272,21 +269,21 @@
                                 </div>
                             {% else %}
                                 <div class="timeline">
-                                    {% for rdv in rdvs_past|slice(0, 3) %}
+                                    {% for consultation in recent_consultations|slice(0, 3) %}
                                         <div class="timeline-item">
                                             <div class="timeline-item-date">
-                                                <div class="date-badge">{{ rdv.dateHeure|date('d/m') }}</div>
-                                                <div class="date-year text-muted small">{{ rdv.dateHeure|date('Y') }}</div>
+                                                <div class="date-badge">{{ consultation.date|date('d/m') }}</div>
+                                                <div class="date-year text-muted small">{{ consultation.date|date('Y') }}</div>
                                             </div>
                                             <div class="timeline-item-content">
                                                 <div class="card border-0">
                                                     <div class="card-body p-3">
-                                                        <h6 class="mb-1">Consultation avec Dr. {{ rdv.medecin.prenom }} {{ rdv.medecin.nom }}</h6>
+                                                        <h6 class="mb-1">Consultation avec Dr. {{ consultation.medecin.prenom }} {{ consultation.medecin.nom }}</h6>
                                                         <div class="d-flex text-muted small mb-2">
-                                                            <div class="me-3"><i class="bi bi-tag me-1"></i>{{ rdv.type }}</div>
-                                                            <div><i class="bi bi-clock me-1"></i>{{ rdv.dateHeure|date('H:i') }}</div>
+                                                            <div class="me-3"><i class="bi bi-clipboard me-1"></i>Consultation</div>
+                                                            <div><i class="bi bi-clock me-1"></i>{{ consultation.heure|date('H:i') }}</div>
                                                         </div>
-                                                        <a href="{{ path('app_patient_rdv_show', {'id': rdv.id}) }}" class="btn btn-sm btn-outline-primary mt-1">
+                                                        <a href="{{ path('app_patient_consultation_show', {'id': consultation.id}) }}" class="btn btn-sm btn-outline-primary mt-1">
                                                             <i class="bi bi-file-text me-1"></i>Voir le compte-rendu
                                                         </a>
                                                     </div>
@@ -300,7 +297,7 @@
                         
                         <!-- Prestations tab -->
                         <div class="tab-pane fade" id="prestations-tab-pane" role="tabpanel" tabindex="0">
-                            {% if prestations_past is empty %}
+                            {% if recent_prestations is empty %}
                                 <div class="text-center py-4">
                                     <div class="empty-state mb-3">
                                         <i class="bi bi-clipboard-x text-muted opacity-50 fs-4"></i>
@@ -309,7 +306,7 @@
                                 </div>
                             {% else %}
                                 <div class="timeline">
-                                    {% for prestation in prestations_past|slice(0, 3) %}
+                                    {% for prestation in recent_prestations|slice(0, 3) %}
                                         <div class="timeline-item">
                                             <div class="timeline-item-date">
                                                 <div class="date-badge">{{ prestation.date|date('d/m') }}</div>
@@ -462,7 +459,7 @@
 </div>
 
 <!-- Cancellation modals for upcoming appointments -->
-{% for rdv in rdvs_upcoming %}
+{% for rdv in upcoming_consultations %}
     <div class="modal fade" id="cancelModal{{ rdv.id }}" tabindex="-1" aria-labelledby="cancelModalLabel{{ rdv.id }}" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -476,7 +473,7 @@
                         Êtes-vous sûr de vouloir annuler ce rendez-vous ? 
                     </div>
                     <div class="mb-3">
-                        <strong>Date :</strong> {{ rdv.dateHeure|date('d/m/Y') }} à {{ rdv.dateHeure|date('H:i') }}<br>
+                        <strong>Date :</strong> {{ rdv.date|date('d/m/Y') }} à {{ rdv.heure|date('H:i') }}<br>
                         <strong>Médecin :</strong> Dr. {{ rdv.medecin.prenom }} {{ rdv.medecin.nom }}<br>
                         <strong>Type :</strong> {{ rdv.type }}
                     </div>
@@ -484,7 +481,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fermer</button>
-                    <a href="{{ path('app_patient_rdv_cancel', {'id': rdv.id}) }}" class="btn btn-danger">
+                    <a href="{{ path('app_patient_consultation_cancel', {'id': rdv.id}) }}" class="btn btn-danger">
                         <i class="bi bi-x-circle me-2"></i>Confirmer l'annulation
                     </a>
                 </div>

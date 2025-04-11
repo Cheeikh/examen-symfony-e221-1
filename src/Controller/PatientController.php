@@ -432,21 +432,113 @@ class PatientController extends AbstractController
         $consultations = $consultationRepository->findByPatient($patient);
         $prestations = $prestationRepository->findByPatient($patient);
         
+        // Données factices pour le moment
+        $antecedents = [
+            [
+                'type' => 'Médical',
+                'description' => 'Hypertension artérielle',
+                'date' => new \DateTime('-2 years')
+            ],
+            [
+                'type' => 'Chirurgical',
+                'description' => 'Appendicectomie',
+                'date' => new \DateTime('-5 years')
+            ]
+        ];
+        
+        $allergies = [
+            [
+                'nom' => 'Pénicilline',
+                'reaction' => 'Éruption cutanée',
+                'severite' => 'Moyenne'
+            ],
+            [
+                'nom' => 'Arachides',
+                'reaction' => 'Difficultés respiratoires',
+                'severite' => 'Élevée'
+            ]
+        ];
+        
+        $medications = [
+            [
+                'nom' => 'Amlodipine',
+                'posologie' => '5mg 1x par jour',
+                'debut' => new \DateTime('-1 year'),
+                'fin' => null,
+                'statut' => 'En cours'
+            ]
+        ];
+        
         return $this->render('patient/medical_record.html.twig', [
+            'patient' => $patient,
             'consultations' => $consultations,
             'prestations' => $prestations,
+            'antecedents' => $antecedents,
+            'allergies' => $allergies,
+            'medications' => $medications
         ]);
     }
     
     #[Route('/messages', name: 'app_patient_messages')]
-    public function messages(): Response
+    public function messages(MedecinRepository $medecinRepository): Response
     {
         $patient = $this->getUser();
         
         // Pour l'instant, nous utilisons des données factices
         // Dans une implémentation réelle, vous récupéreriez les messages depuis une repository
         
-        return $this->render('patient/messages.html.twig');
+        // Messages reçus (factices)
+        $receivedMessages = [
+            [
+                'id' => 1,
+                'sender' => [
+                    'type' => 'doctor',
+                    'name' => 'Amadou Diop'
+                ],
+                'subject' => 'Résultats de votre analyse sanguine',
+                'content' => 'Bonjour, Les résultats de votre analyse sanguine sont disponibles. Tout est normal. Cordialement, Dr. Amadou Diop',
+                'date' => new \DateTime('-2 days'),
+                'isUnread' => true
+            ],
+            [
+                'id' => 2,
+                'sender' => [
+                    'type' => 'service',
+                    'name' => 'Service Laboratoire'
+                ],
+                'subject' => 'Rappel: Rendez-vous pour prélèvement',
+                'content' => 'Bonjour, Nous vous rappelons votre rendez-vous pour un prélèvement sanguin demain à 10h. Veuillez vous présenter à jeun. Merci, Le service de laboratoire.',
+                'date' => new \DateTime('-5 days'),
+                'isUnread' => false
+            ]
+        ];
+        
+        // Messages envoyés (factices)
+        $sentMessages = [
+            [
+                'id' => 3,
+                'recipient' => [
+                    'type' => 'doctor',
+                    'name' => 'Amadou Diop'
+                ],
+                'subject' => 'Question sur mon traitement',
+                'content' => 'Bonjour Docteur, J\'ai une question concernant mon traitement. Puis-je prendre le médicament le soir plutôt que le matin ? Cordialement.',
+                'date' => new \DateTime('-3 days')
+            ]
+        ];
+        
+        // Compteur de messages non lus (factice)
+        $unreadCount = 1;
+        
+        // Liste des médecins (réelle)
+        $doctors = $medecinRepository->findAll();
+        
+        return $this->render('patient/messages.html.twig', [
+            'received_messages' => $receivedMessages,
+            'sent_messages' => $sentMessages,
+            'unread_count' => $unreadCount,
+            'doctors' => $doctors
+        ]);
     }
     
     // Routes pour les fichiers PDF (à implémenter plus tard)
@@ -492,5 +584,47 @@ class PatientController extends AbstractController
         MedecinRepository $medecinRepository
     ): Response {
         return $this->redirectToRoute('app_patient_consultation_new');
+    }
+
+    #[Route('/message/send', name: 'app_patient_message_send', methods: ['POST'])]
+    public function sendMessage(Request $request): Response
+    {
+        $patient = $this->getUser();
+        
+        // Dans une implémentation réelle, vous enregistreriez le message dans la base de données
+        // Pour l'instant, nous nous contentons d'afficher un message flash
+        
+        $recipient = $request->request->get('recipient');
+        $subject = $request->request->get('subject');
+        $content = $request->request->get('content');
+        
+        // Vérification des données
+        if (!$recipient || !$subject || !$content) {
+            $this->addFlash('error', 'Tous les champs sont obligatoires');
+            return $this->redirectToRoute('app_patient_messages');
+        }
+        
+        $this->addFlash('success', 'Votre message a été envoyé avec succès');
+        return $this->redirectToRoute('app_patient_messages');
+    }
+
+    #[Route('/message/{id}/reply', name: 'app_patient_message_reply', methods: ['POST'])]
+    public function replyMessage(Request $request, $id): Response
+    {
+        $patient = $this->getUser();
+        
+        // Dans une implémentation réelle, vous récupéreriez le message original
+        // et enregistreriez la réponse dans la base de données
+        
+        $content = $request->request->get('content');
+        
+        // Vérification des données
+        if (!$content) {
+            $this->addFlash('error', 'Le contenu du message ne peut pas être vide');
+            return $this->redirectToRoute('app_patient_messages');
+        }
+        
+        $this->addFlash('success', 'Votre réponse a été envoyée avec succès');
+        return $this->redirectToRoute('app_patient_messages');
     }
 }

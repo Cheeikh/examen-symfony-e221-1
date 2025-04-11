@@ -259,7 +259,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="replyMessageForm" action="{{ path('app_patient_message_reply') }}" method="post">
+                <form id="replyMessageForm" method="post">
                     <input type="hidden" id="replyMessageId" name="messageId">
                     <div class="mb-3">
                         <label for="replySubject" class="form-label">Sujet</label>
@@ -403,8 +403,13 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Setup reply functionality
             document.querySelector('.message-reply').addEventListener('click', function() {
-                document.getElementById('replyMessageId').value = this.getAttribute('data-message-id');
+                const messageId = this.getAttribute('data-message-id');
+                document.getElementById('replyMessageId').value = messageId;
                 document.getElementById('replySubject').value = 'Re: ' + messageData.title;
+                
+                // Set the form action dynamically with the message ID
+                const replyForm = document.getElementById('replyMessageForm');
+                replyForm.action = "{{ path('app_patient_message_reply', {'id': 'MESSAGE_ID'}) }}".replace('MESSAGE_ID', messageId);
             });
         });
     });
